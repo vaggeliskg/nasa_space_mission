@@ -33,6 +33,27 @@ export default function SoloMissionPlanning() {
   useEffect(() => {
     setAssessmentResult(null);
   }, [selectedObjective, selectedBus, selectedInstruments, selectedLV]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const raw = sessionStorage.getItem('selectedOrbitRegime');
+    if (raw) {
+      try {
+        const orbit = JSON.parse(raw) as { id: string; mappedObjectiveId: string };
+        const matched = OBJECTIVES.find((o) => o.id === orbit.mappedObjectiveId);
+        if (matched) {
+          setSelectedObjective(matched);
+          setViewMode('assembly');
+          if (!sessionStorage.getItem('vabTourSeen')) {
+            setIsHelpOpen(true);
+            sessionStorage.setItem('vabTourSeen', 'true');
+          }
+        }
+      } catch {
+        // Ignore malformed storage
+      }
+    }
+  }, []);
   
 
   const handleRunAssessment = () => {

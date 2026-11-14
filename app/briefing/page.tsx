@@ -55,7 +55,7 @@ useEffect(() => {
   const handleContinue = (e: React.MouseEvent) => {
     e.stopPropagation();
     sound.playBoot();
-    router.push('/mission');
+    router.push('/orbits');
   };
 
   // Split currently revealed substring back into paragraphs for clean spacing

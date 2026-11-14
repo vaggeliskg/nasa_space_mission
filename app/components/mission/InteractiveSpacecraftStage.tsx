@@ -1,7 +1,7 @@
 'use client';
 
 import '@react-three/fiber';
-import { useRef, useMemo, Suspense } from 'react';
+import React, { useRef, useMemo, Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Html, useGLTF, Environment } from '@react-three/drei';
 import * as THREE from 'three';
@@ -31,12 +31,17 @@ interface InteractiveSpacecraftStageProps {
   configuredSlots: Set<SpacecraftPartSlot>;
 }
 
+interface SpacecraftHullProps extends InteractiveSpacecraftStageProps {
+  portal: React.RefObject<HTMLDivElement>;
+}
+
 function SpacecraftHull({
   activeSlot,
   onSelectSlot,
   equippedLabels,
   configuredSlots,
-}: InteractiveSpacecraftStageProps) {
+  portal,
+}: SpacecraftHullProps) {
   const groupRef = useRef<THREE.Group>(null);
   const { scene } = useGLTF('/models/spaceship.glb');
 
@@ -88,7 +93,6 @@ function SpacecraftHull({
         const isConfigured = configuredSlots.has(hp.slot);
         const color = isSelected || isConfigured ? '#33ff33' : '#ffb000';
 
-
         return (
           <group key={hp.slot} position={hp.position}>
             {/* Compact 3D Hardpoint Node */}
@@ -116,33 +120,39 @@ function SpacecraftHull({
             </mesh>
 
             {/* Compact Pill When Closed -> Expands Text Only When Pressed */}
-            <Html key={hp.slot} distanceFactor={7.5} zIndexRange={[50, 0]} center>
-                <button
-                    type="button"
-                    onClick={(e) => {
-                    e.stopPropagation();
-                    sound.playClick();
-                    onSelectSlot(isSelected ? null : hp.slot);
-                    }}
-                    className={`border font-mono whitespace-nowrap transition-all cursor-pointer ${
-                    isSelected
-                        ? 'px-2 py-1 bg-[#041404]/95 border-[#33ff33] text-[#33ff33] shadow-[0_0_12px_rgba(51,255,51,0.5)] text-left'
-                        : 'px-1.5 py-0.5 bg-[#030803]/90 border-[#ffb000] text-[#ffb000] hover:border-[#33ff33] hover:text-[#33ff33] text-[8px] font-bold tracking-wider'
-                    }`}
-                >
-                    {!isSelected ? (
-                    <span>{isConfigured ? `✓ ${hp.code}` : hp.code}</span>
-                    ) : (
-                    <>
-                        <div className="text-[9px] font-bold tracking-wider">
-                        [{hp.code}] {hp.label}
-                        </div>
-                        <div className="text-[8px] text-[#22bb22] max-w-36 truncate">
-                        {equippedLabels[hp.slot]}
-                        </div>
-                    </>
-                    )}
-                </button>
+            <Html
+              key={hp.slot}
+              portal={portal}
+              distanceFactor={7.5}
+              zIndexRange={[50, 0]}
+              center
+            >
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  sound.playClick();
+                  onSelectSlot(isSelected ? null : hp.slot);
+                }}
+                className={`pointer-events-auto border font-mono whitespace-nowrap transition-all cursor-pointer ${
+                  isSelected
+                    ? 'px-2 py-1 bg-[#041404]/95 border-[#33ff33] text-[#33ff33] shadow-[0_0_12px_rgba(51,255,51,0.5)] text-left'
+                    : 'px-1.5 py-0.5 bg-[#030803]/90 border-[#ffb000] text-[#ffb000] hover:border-[#33ff33] hover:text-[#33ff33] text-[8px] font-bold tracking-wider'
+                }`}
+              >
+                {!isSelected ? (
+                  <span>{isConfigured ? `✓ ${hp.code}` : hp.code}</span>
+                ) : (
+                  <>
+                    <div className="text-[9px] font-bold tracking-wider">
+                      [{hp.code}] {hp.label}
+                    </div>
+                    <div className="text-[8px] text-[#22bb22] max-w-36 truncate">
+                      {equippedLabels[hp.slot]}
+                    </div>
+                  </>
+                )}
+              </button>
             </Html>
           </group>
         );
@@ -153,28 +163,33 @@ function SpacecraftHull({
 
 useGLTF.preload('/models/spaceship.glb');
 
-export default function InteractiveSpacecraftStage(props: InteractiveSpacecraftStageProps) {
+export default function InteractiveSpacecraftStage({
+  activeSlot,
+  onSelectSlot,
+  equippedLabels,
+  configuredSlots,
+}: InteractiveSpacecraftStageProps) {
+  const portalRef = useRef<HTMLDivElement>(null!);
+
   return (
-    <div className="relative z-20 w-full h-125 border-2 border-[#1a881a] bg-[#020602] overflow-hidden">
-      <div className="absolute top-2.5 left-3 right-3 z-10 flex justify-between text-[10px] tracking-widest text-[#1a881a] pointer-events-none">
-        <span>VAB HOLOGRAPHIC BAY // CLICK NODE TO INSPECT</span>
-        <span className="text-[#33ff33]">[DRAG: ROTATE HULL]</span>
-      </div>
+    <div className="relative w-full h-115 sm:h-135 border-2 border-[#1a881a] bg-[#020602] overflow-hidden">
+      {/* Dedicated DOM portal target so Drei <Html> never unmounts synchronously inside R3F */}
+      <div ref={portalRef} className="pointer-events-none" />
 
-      <Canvas
-        camera={{ position: [0, 1.1, 4.7], fov: 42 }}
-        gl={{ toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.1 }}
-      >
-        <Environment preset="city" environmentIntensity={0.45} />
-        <ambientLight intensity={0.4} />
-        <directionalLight position={[5, 6, 4]} intensity={2.4} color="#fffdf5" />
-        <directionalLight position={[-4, -2, -3]} intensity={0.5} color="#33ff33" />
-
+      <Canvas camera={{ position: [0, 1.4, 5.2], fov: 45 }}>
+        <ambientLight intensity={1.1} />
+        <directionalLight position={[5, 6, 4]} intensity={2} />
         <Suspense fallback={null}>
-          <SpacecraftHull {...props} />
+          <Environment preset="city" />
+          <SpacecraftHull
+            activeSlot={activeSlot}
+            onSelectSlot={onSelectSlot}
+            equippedLabels={equippedLabels}
+            configuredSlots={configuredSlots}
+            portal={portalRef}
+          />
         </Suspense>
-
-        <OrbitControls enablePan={false} minDistance={2.8} maxDistance={7.5} />
+        <OrbitControls enablePan={false} minDistance={3} maxDistance={9} />
       </Canvas>
     </div>
   );
