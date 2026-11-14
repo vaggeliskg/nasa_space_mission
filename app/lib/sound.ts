@@ -52,6 +52,30 @@ class RetroSoundEngine {
     osc.stop(this.ctx.currentTime + 0.03);
   }
 
+  playType() {
+    this.init();
+    if (!this.ctx || this.ctx.state !== 'running') return;
+
+    const now = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    // Slight pitch jitter
+    const jitter = (Math.random() - 0.5) * 120;
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(620 + jitter, now);
+    osc.frequency.exponentialRampToValueAtTime(140, now + 0.022);
+
+    gain.gain.setValueAtTime(0.045, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.022);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + 0.022);
+  }
+
   // Terminal boot tone
   playBoot() {
     this.init();

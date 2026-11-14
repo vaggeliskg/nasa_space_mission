@@ -15,7 +15,7 @@ export default function WelcomeScreen() {
       id: 'solo',
       title: '[ 1 ] PLAY SOLO',
       subtext: 'SINGLE PLAYER // MISSION PLANNING',
-      path: '/mission',
+      path: '/briefing',
     },
     {
       id: 'multiplayer',
