@@ -1,0 +1,84 @@
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap');
+@import "tailwindcss";
+
+:root {
+  --phosphor-green: #33ff33;
+  --phosphor-dim: #1a881a;
+  --phosphor-glow: rgba(51, 255, 51, 0.4);
+  --crt-bg: #050a05;
+}
+
+body {
+  background-color: var(--crt-bg);
+  color: var(--phosphor-green);
+  font-family: 'Share Tech Mono', monospace;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+/* Remove CRT scanline stripes everywhere */
+.crt-container::before {
+  display: none !important;
+  content: none !important;
+  background: none !important;
+  background-image: none !important;
+}
+
+/* CRT Screen Curvature and Vignette */
+.crt-container {
+  min-height: 100vh;
+  position: relative;
+  background: radial-gradient(circle at center, #0a140a 0%, #030703 85%, #000000 100%);
+  text-shadow: 0 0 6px var(--phosphor-glow);
+}
+
+/* Subtle CRT Flicker */
+.crt-container::after {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: rgba(18, 16, 16, 0.03);
+  opacity: 0;
+  z-index: 40;
+  pointer-events: none;
+  animation: flicker 0.15s infinite;
+}
+
+@keyframes flicker {
+  0% { opacity: 0.05; }
+  50% { opacity: 0.08; }
+  100% { opacity: 0.04; }
+}
+
+/* Custom terminal scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #050a05;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--phosphor-dim);
+}
+
+/* Custom 80s Pixel Rocket Cursor */
+html,
+body,
+*,
+button,
+a,
+input,
+select {
+  cursor: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBzaGFwZS1yZW5kZXJpbmc9ImNyaXNwRWRnZXMiPjxwb2x5Z29uIHBvaW50cz0iMTIsMCA5LDYgOSwxNCA2LDE4IDYsMjAgOSwxNyA5LDIwIDExLDIwIDExLDE2IDEzLDE2IDEzLDIwIDE1LDIwIDE1LDE3IDE4LDIwIDE4LDE4IDE1LDE0IDE1LDYiIGZpbGw9IiMzM2ZmMzMiLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjkiIHI9IjEuNSIgZmlsbD0iIzA1MGEwNSIvPjxwb2x5Z29uIHBvaW50cz0iMTEsMjAgMTMsMjAgMTIsMjMiIGZpbGw9IiNmZmIwMDAiLz48L3N2Zz4=") 12 0, auto !important;
+}
+
+/* Rocket thrust activates on click / active */
+html:active,
+body:active,
+*:active,
+button:active,
+a:active {
+  cursor: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBzaGFwZS1yZW5kZXJpbmc9ImNyaXNwRWRnZXMiPjxwb2x5Z29uIHBvaW50cz0iMTIsMCA5LDYgOSwxNCA2LDE4IDYsMjAgOSwxNyA5LDIwIDExLDIwIDExLDE2IDEzLDE2IDEzLDIwIDE1LDIwIDE1LDE3IDE4LDIwIDE4LDE4IDE1LDE0IDE1LDYiIGZpbGw9IiMzM2ZmMzMiLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjkiIHI9IjEuNSIgZmlsbD0iIzA1MGEwNSIvPjxwb2x5Z29uIHBvaW50cz0iMTAsMjAgMTQsMjAgMTIsMjQiIGZpbGw9IiNmZjMzMzMiLz48cG9seWdvbiBwb2ludHM9IjExLDIwIDEzLDIwIDEyLDIyIiBmaWxsPSIjZmZmZjMzIi8+PC9zdmc+") 12 0, auto !important;
+}
