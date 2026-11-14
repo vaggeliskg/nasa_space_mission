@@ -10,7 +10,7 @@ export default function AmbientSynth() {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const startSynth = () => {
-    if (ctxRef.current) return;
+    if (ctxRef.current && ctxRef.current.state !== 'closed') return;
 
     const AudioCtx =
       window.AudioContext ||
@@ -80,7 +80,7 @@ export default function AmbientSynth() {
     setIsPlaying(true);
   };
 
-  useEffect(() => {
+useEffect(() => {
     const unlock = () => {
       startSynth();
       window.removeEventListener('pointerdown', unlock);
@@ -94,8 +94,19 @@ export default function AmbientSynth() {
     return () => {
       window.removeEventListener('pointerdown', unlock);
       window.removeEventListener('keydown', unlock);
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      ctxRef.current?.close();
+
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+
+      const currentCtx = ctxRef.current;
+      ctxRef.current = null;
+      masterGainRef.current = null;
+
+      if (currentCtx && currentCtx.state !== 'closed') {
+        currentCtx.close().catch(() => {});
+      }
     };
   }, []);
 
