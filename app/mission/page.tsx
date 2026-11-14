@@ -15,6 +15,7 @@ import InteractiveSpacecraftStage, {
 } from '../components/mission/InteractiveSpacecraftStage';
 import PartSideInspector from '../components/mission/PartSideInspector';
 import MissionHelpModal from '../components/mission/MissionHelpModal';
+import { evaluateMission, MissionEvaluationResult } from '../lib/evaluateMission';
 
 export default function SoloMissionPlanning() {
   const router = useRouter();
@@ -26,6 +27,38 @@ export default function SoloMissionPlanning() {
   const [selectedInstruments, setSelectedInstruments] = useState<string[]>([]);
   const [selectedLV, setSelectedLV] = useState<LaunchVehicle | null>(null);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [isAssessing, setIsAssessing] = useState(false);
+  const [assessmentResult, setAssessmentResult] = useState<MissionEvaluationResult | null>(null);
+
+  useEffect(() => {
+    setAssessmentResult(null);
+  }, [selectedObjective, selectedBus, selectedInstruments, selectedLV]);
+  
+
+  const handleRunAssessment = () => {
+  if (isAssessing) return;
+  sound.playClick();
+  setIsAssessing(true);
+  setAssessmentResult(null);
+
+  setTimeout(() => {
+    const result = evaluateMission(
+      {
+        selectedBus,
+        selectedInstruments,
+        selectedLV,
+      },
+      selectedObjective
+    );
+    setAssessmentResult(result);
+    setIsAssessing(false);
+    if (result.passed) {
+      sound.playBoot();
+    } else {
+      sound.playBlip();
+    }
+  }, 3000);
+};
 
   // Tracks which hardpoints currently have an active spec chosen
   const configuredSlots = useMemo(() => {
@@ -154,7 +187,7 @@ export default function SoloMissionPlanning() {
   };
 
   const handleLaunch = () => {
-    if (!selectedLV || !telemetry.isLaunchViable) return;
+    if (!selectedLV || !assessmentResult?.passed) return;
     sound.playClick();
     if (typeof window !== 'undefined') {
       sessionStorage.setItem(
@@ -165,6 +198,7 @@ export default function SoloMissionPlanning() {
           instruments: selectedInstruments,
           launchVehicle: selectedLV,
           telemetry,
+          assessment: assessmentResult,
         })
       );
     }
@@ -277,6 +311,66 @@ export default function SoloMissionPlanning() {
             </div>
           </div>
 
+          {/* FLIGHT READINESS ASSESSMENT CONSOLE */}
+          {viewMode === 'assembly' && (isAssessing || assessmentResult) && (
+            <div
+              className={`mt-6 p-4 border-2 font-mono text-xs ${
+                isAssessing
+                  ? 'border-amber-400 bg-amber-950/20 text-amber-300'
+                  : assessmentResult?.passed
+                  ? 'border-[#33ff33] bg-[#041204] text-[#33ff33] shadow-[0_0_20px_rgba(51,255,51,0.25)]'
+                  : 'border-red-500 bg-red-950/25 text-red-400 shadow-[0_0_20px_rgba(239,68,68,0.25)]'
+              }`}
+            >
+              {isAssessing ? (
+                  <div className="flex items-center gap-3 py-2">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="square"
+                      strokeLinejoin="miter"
+                      className="w-5 h-5 text-amber-400 animate-spin shrink-0"
+                    >
+                      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+                    </svg>
+                    <span className="tracking-widest font-bold animate-pulse">
+                      RUNNING NASA FLIGHT READINESS DIAGNOSTICS // VERIFYING GATES, EOL POWER &amp; ODMSP...
+                    </span>
+                  </div>
+                ) : (
+                assessmentResult && (
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap justify-between items-center gap-2 border-b border-current/30 pb-2">
+                      <div className="flex items-center gap-3">
+                        <span className="font-bold text-sm tracking-widest">
+                          STATUS: {assessmentResult.status}
+                        </span>
+                        {assessmentResult.passed && (
+                          <span className="px-2 py-0.5 border border-[#33ff33] bg-[#33ff33]/20 font-bold">
+                            SCORE: {assessmentResult.score} PTS // RANK [{assessmentResult.rank}]
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[10px] opacity-80">
+                        AVG TRL: {assessmentResult.metrics.avgTrl.toFixed(1)} | EOL PWR:{' '}
+                        {Math.round(assessmentResult.metrics.eolPower)}W | ΔV REM: +
+                        {assessmentResult.metrics.remainingDeltaV} M/S
+                      </span>
+                    </div>
+
+                    <ul className="space-y-1 text-[11px] leading-relaxed">
+                      {assessmentResult.feedbackLog.map((entry, idx) => (
+                        <li key={idx}>► {entry}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )
+              )}
+            </div>
+          )}
+
           <footer className="mt-8 pt-4 border-t border-[#144414] flex flex-wrap justify-between items-center gap-3">
             <div>
               {viewMode === 'assembly' ? (
@@ -302,7 +396,7 @@ export default function SoloMissionPlanning() {
               )}
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-3">
               {viewMode === 'objective' ? (
                 <button
                   type="button"
@@ -319,24 +413,53 @@ export default function SoloMissionPlanning() {
                   PROCEED TO SPACECRAFT INTEGRATION ►
                 </button>
               ) : (
-                <button
-                  type="button"
-                  data-tour-target="launch-button"
-                  disabled={!telemetry.isLaunchViable}
-                  onClick={handleLaunch}
-                  className={`px-6 py-2.5 border text-xs font-bold tracking-wider transition-all ${
-                    telemetry.isLaunchViable
-                      ? 'border-[#33ff33] bg-[#33ff33]/25 text-[#33ff33] shadow-[0_0_20px_rgba(51,255,51,0.4)] animate-pulse cursor-pointer'
-                      : 'border-red-900 bg-red-950/20 text-red-700 cursor-not-allowed'
-                  }`}
-                >
-                  {telemetry.isLaunchViable
-                    ? 'EXECUTE LAUNCH (ENTER ORBIT SIM) ►'
-                    : 'LAUNCH FORBIDDEN (RESOLVE NO-GOs)'}
-                </button>
+                <>
+                  <button
+                    type="button"
+                    data-tour-target="launch-button"
+                    disabled={isAssessing}
+                    onClick={handleRunAssessment}
+                    className={`px-5 py-2.5 border text-xs font-bold tracking-wider transition-all flex items-center gap-2 ${
+                      isAssessing
+                        ? 'border-amber-500 bg-amber-950/30 text-amber-400 cursor-wait'
+                        : 'border-amber-400 bg-amber-400/15 text-amber-300 hover:bg-amber-400/25 shadow-[0_0_15px_rgba(251,191,36,0.25)] cursor-pointer'
+                    }`}
+                  >
+                    {isAssessing ? (
+                      <>
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="square"
+                          strokeLinejoin="miter"
+                          className="w-4 h-4 text-amber-400 animate-spin shrink-0"
+                        >
+                          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+                        </svg>
+                        ASSESSING MISSION...
+                      </>
+                    ) : (
+                      'RUN FLIGHT READINESS ASSESSMENT'
+                    )}
+                  </button>
+
+                  {assessmentResult?.passed && (
+                    <button
+                      type="button"
+                      onClick={handleLaunch}
+                      className="px-6 py-2.5 border-2 border-[#33ff33] bg-[#33ff33]/25 text-[#33ff33] hover:bg-[#33ff33]/40 shadow-[0_0_20px_rgba(51,255,51,0.45)] animate-pulse text-xs font-bold tracking-wider cursor-pointer"
+                    >
+                      EXECUTE LAUNCH (RANK {assessmentResult.rank}) ►
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </footer>
+
+
         </main>
       </div>
       <MissionHelpModal isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} onSelectSlot={setActiveSlot} />
