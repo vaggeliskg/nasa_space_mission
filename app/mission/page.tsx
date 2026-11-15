@@ -29,11 +29,7 @@ export default function SoloMissionPlanning() {
   const [activeSlot, setActiveSlot] = useState<SpacecraftPartSlot | null>(null);
 
   // Selected components state
-  const [selectedBus, setSelectedBus] = useState<string[]>([
-    'pwr_standard_600w',
-    'comm_sband_midlat',
-    'adcs_piezo_fine',
-  ]);
+  const [selectedBus, setSelectedBus] = useState<string[]>([]);
   const [selectedInstruments, setSelectedInstruments] = useState<string[]>([]);
   const [selectedLV, setSelectedLV] = useState<LaunchVehicle | null>(null);
 
@@ -106,11 +102,12 @@ export default function SoloMissionPlanning() {
     if (!target) return;
 
     setSelectedBus((prev) => {
+      const isAlreadyEquipped = prev.includes(id);
       const filtered = prev.filter((existingId) => {
         const existing = BUS_COMPONENTS.find((b) => b.id === existingId);
         return existing?.category !== target.category;
       });
-      return [...filtered, id];
+      return isAlreadyEquipped ? filtered : [...filtered, id];
     });
     setAssessmentResult(null);
   };
