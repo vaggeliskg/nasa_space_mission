@@ -45,7 +45,7 @@ export function evaluateMission(
 
   const busTotals = calculateBusSelectionTotals(selectedBus, selectedOrbit);
 
-  let totalMass = 250 + busTotals.mass;
+  let totalMass = 0 + busTotals.mass;
   let totalCost = 35 + busTotals.cost;
   const bolPower = busTotals.bolPower;
   let powerDraw = 80 + busTotals.powerDraw;

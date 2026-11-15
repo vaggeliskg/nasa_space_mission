@@ -210,7 +210,7 @@ export default function SoloMissionPlanning() {
 const telemetry: TelemetryData = useMemo(() => {
     const busTotals = calculateBusSelectionTotals(selectedBus, selectedOrbit);
 
-    let mass = 250 + busTotals.mass; // Dry chassis base mass (kg) + bus
+    let mass = 0 + busTotals.mass; // Dry chassis base mass (kg) + bus
     let cost = 35 + busTotals.cost; // Base integration & engineering cost (€M) + bus
     const powerGen = busTotals.bolPower;
     let powerDraw = 80 + busTotals.powerDraw; // Baseline housekeeping draw (W) + bus
