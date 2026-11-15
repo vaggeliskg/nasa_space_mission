@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Starfield from '../components/StarField';
 import EarthViewer from '../components/EarthViewer';
+import CommanderDebrief from '../components/mission/CommanderDebrief';
 import { LaunchSite } from '../data/earthData';
 import { sound } from '../lib/sound';
 
@@ -26,6 +27,7 @@ export default function SimulationPage() {
   const router = useRouter();
   const [config, setConfig] = useState<StoredMissionConfig | null>(null);
   const [selectedLaunchSite, setSelectedLaunchSite] = useState<LaunchSite | null>(null);
+  const [launchedSite, setLaunchedSite] = useState<LaunchSite | null>(null);
 
   useEffect(() => {
     const raw = sessionStorage.getItem('missionConfig');
@@ -66,10 +68,23 @@ export default function SimulationPage() {
           </button>
         </header>
 
-        <EarthViewer
-          selectedSite={selectedLaunchSite}
-          onSelectSite={setSelectedLaunchSite}
-        />
+        {/* Earth Viewer on Left + Commander Vance Briefing on Right when launched from a pad */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+          <div className={launchedSite ? 'lg:col-span-7' : 'lg:col-span-12'}>
+            <EarthViewer
+              selectedSite={selectedLaunchSite}
+              onSelectSite={setSelectedLaunchSite}
+              onLaunchComplete={(site) => setLaunchedSite(site)}
+              onResetLaunch={() => setLaunchedSite(null)}
+            />
+          </div>
+
+          {launchedSite && (
+            <div className="lg:col-span-5">
+              <CommanderDebrief imageSrc="/images/success_commander.jpg" />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
