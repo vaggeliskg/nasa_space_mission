@@ -1,7 +1,8 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { SpacecraftPartSlot } from './InteractiveSpacecraftStage';
-import { Objective, LaunchVehicle } from '../../types/mission';
+import { Objective, LaunchVehicle, BusSubCategory } from '../../types/mission';
 import { BUS_COMPONENTS, INSTRUMENTS, LAUNCH_VEHICLES } from '../../data/missionData';
 import { sound } from '../../lib/sound';
 
@@ -11,36 +12,74 @@ interface PartSideInspectorProps {
   selectedBus: string[];
   selectedInstruments: string[];
   selectedLV: LaunchVehicle | null;
-  onToggleBus: (id: string, category: 'power' | 'comm' | 'adcs') => void;
+  onToggleBus: (id: string) => void;
   onToggleInstrument: (id: string) => void;
   onSelectLV: (lv: LaunchVehicle) => void;
 }
 
-const SLOT_TITLES: Record<SpacecraftPartSlot, { code: string; title: string; hint: string }> = {
+type SubTabKey = BusSubCategory | 'payload_instruments' | 'launch_vehicle';
+
+interface SubTabDef {
+  key: SubTabKey;
+  label: string;
+  ruleBanner?: string;
+}
+
+const SLOT_CONFIG: Record<
+  SpacecraftPartSlot,
+  {
+    code: string;
+    title: string;
+    tabs: SubTabDef[];
+  }
+> = {
   power: {
     code: 'HP-01 // ELECTRICAL POWER SYSTEM',
-    title: 'SOLAR ARRAYS & GENERATION',
-    hint: 'Select primary power source to maintain positive wattage margin.',
+    title: 'BATTERIES & SOLAR ARRAYS',
+    tabs: [
+      { key: 'batteries', label: '1.1 BATTERIES' },
+      { key: 'solar_panels', label: '1.2 SOLAR PANELS' },
+    ],
   },
   comm: {
-    code: 'HP-02 // TELEMETRY & TRACKING',
-    title: 'COMMUNICATIONS ANTENNA',
-    hint: 'High-gain parabolic or optical systems increase downlink capacity.',
+    code: 'HP-02 // COMMUNICATIONS & GROUND LINK',
+    title: 'FREQUENCY, CONTACT & TRANSCEIVER',
+    tabs: [
+      { key: 'comm_frequency', label: '2.1 FREQUENCY' },
+      { key: 'comm_contact', label: '2.2 CONTACT TIME' },
+      {
+        key: 'comm_transceiver',
+        label: '2.3 RADIO TX',
+        ruleBanner: 'POWER RULE: Radio draws 5× the RF power it transmits.',
+      },
+    ],
+  },
+  propulsion: {
+    code: 'HP-03 // ORBITAL MANEUVERING',
+    title: '3.1 PROPULSION & LAUNCH BOOSTER',
+    tabs: [
+      { key: 'propulsion', label: '3.1 PROPULSION' },
+      { key: 'launch_vehicle', label: '3.2 LAUNCH VEHICLE' },
+    ],
   },
   adcs: {
-    code: 'HP-03 // ATTITUDE DETERMINATION',
-    title: 'GUIDANCE & ADCS CORE',
-    hint: 'Controls slew agility and arcsecond pointing precision.',
+    code: 'HP-04 // ATTITUDE & PAYLOAD BAY',
+    title: '4.1 ADCS & SCIENCE INSTRUMENTS',
+    tabs: [
+      { key: 'adcs', label: '4.1 ADCS (ATTITUDE)' },
+      { key: 'payload_instruments', label: '4.2 PAYLOADS' },
+    ],
   },
-  payload: {
-    code: 'HP-04 // SCIENTIFIC INSTRUMENT BAY',
-    title: 'ORBITAL SENSORS (MULTI-SELECT)',
-    hint: 'Mount instruments to reach the science quota and unlock orbital scans.',
-  },
-  launcher: {
-    code: 'HP-05 // PROPULSION & INSERTION',
-    title: 'LAUNCH VEHICLE SELECTION',
-    hint: 'Determines maximum total payload mass capacity to target orbit.',
+  systems: {
+    code: 'HP-05 // SPACECRAFT BUS & SURVIVABILITY',
+    title: 'STRUCTURE, SHIELDING, THERMAL, OBC & EOL',
+    tabs: [
+      { key: 'structure', label: '5.1 STRUCTURE' },
+      { key: 'radiation', label: '5.2 RADIATION' },
+      { key: 'thermal', label: '5.3 THERMAL' },
+      { key: 'obc', label: '5.4 OBC' },
+      { key: 'eol', label: '5.5 END OF LIFE' },
+    ],
   },
 };
 
@@ -54,6 +93,13 @@ export default function PartSideInspector({
   onToggleInstrument,
   onSelectLV,
 }: PartSideInspectorProps) {
+  const [activeTabIndex, setActiveTabIndex] = useState(0);
+
+  // Reset to the first sub-tab whenever the user switches to a different 3D hardpoint
+  useEffect(() => {
+    setActiveTabIndex(0);
+  }, [activeSlot]);
+
   if (!activeSlot) {
     return (
       <aside className="w-full h-full border-2 border-[#144414] bg-[#030803]/95 p-5 flex flex-col justify-center items-center text-center gap-3">
@@ -61,68 +107,101 @@ export default function PartSideInspector({
           [AWAITING HARDPOINT SELECTION]
         </div>
         <p className="text-xs text-[#22bb22] leading-relaxed">
-          Click any glowing hardpoint node on the 3D spacecraft to inspect and configure its subsystem or payload specs.
+          Click any glowing hardpoint node on the 3D spacecraft to inspect and configure its subsystems.
         </p>
       </aside>
     );
   }
 
-  const header = SLOT_TITLES[activeSlot];
-  const busItems =
-    activeSlot === 'power' || activeSlot === 'comm' || activeSlot === 'adcs'
-      ? BUS_COMPONENTS.filter((c) => c.category === activeSlot)
-      : [];
+  const slotMeta = SLOT_CONFIG[activeSlot];
+  const safeTabIndex = Math.min(activeTabIndex, slotMeta.tabs.length - 1);
+  const currentTab = slotMeta.tabs[safeTabIndex];
+
+  // Show all items in the active sub-tab at once (4 cards for bus categories, 5 for payloads, 3 for LVs)
+  const visibleItems =
+    currentTab.key === 'payload_instruments'
+      ? INSTRUMENTS
+      : currentTab.key === 'launch_vehicle'
+      ? LAUNCH_VEHICLES
+      : BUS_COMPONENTS.filter((c) => c.subCategory === currentTab.key);
+
+  const canGoBack = safeTabIndex > 0;
+  const canGoNext = safeTabIndex < slotMeta.tabs.length - 1;
+
+  const handleBack = () => {
+    if (!canGoBack) return;
+    sound.playClick();
+    setActiveTabIndex(safeTabIndex - 1);
+  };
+
+  const handleNext = () => {
+    if (!canGoNext) return;
+    sound.playClick();
+    setActiveTabIndex(safeTabIndex + 1);
+  };
 
   return (
-    <aside className="w-full h-full border-2 border-[#1a881a] bg-[#030803]/95 p-4 flex flex-col gap-3">
+    <aside className="w-full h-full min-h-0 border-2 border-[#1a881a] bg-[#030803]/95 p-3.5 flex flex-col gap-2.5 overflow-hidden">
+      {/* Header & Sub-Tabs */}
       <div className="border-b border-[#144414] pb-2 shrink-0">
-        <div className="text-[10px] tracking-widest text-amber-400">{header.code}</div>
-        <div className="text-sm font-bold text-[#33ff33] mt-0.5">{header.title}</div>
-        <p className="text-[10px] text-[#1a881a] mt-1 leading-snug">{header.hint}</p>
-      </div>
+        <div className="text-[10px] tracking-widest text-amber-400">{slotMeta.code}</div>
+        <div className="text-sm font-bold text-[#33ff33] mt-0.5">{slotMeta.title}</div>
 
-      {/* Scrollable Option List */}
-      <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-2.5">
-        {/* BUS SUBSYSTEMS (POWER, COMM, ADCS) */}
-        {(activeSlot === 'power' || activeSlot === 'comm' || activeSlot === 'adcs') &&
-          busItems.map((item) => {
-            const isSelected = selectedBus.includes(item.id);
+        <div className="flex flex-wrap gap-1 mt-2">
+          {slotMeta.tabs.map((tab, idx) => {
+            const isTabActive = idx === safeTabIndex;
+            const hasSelection =
+              tab.key === 'payload_instruments'
+                ? selectedInstruments.length > 0
+                : tab.key === 'launch_vehicle'
+                ? Boolean(selectedLV)
+                : selectedBus.some(
+                    (id) => BUS_COMPONENTS.find((b) => b.id === id)?.subCategory === tab.key
+                  );
+
             return (
               <button
-                key={item.id}
+                key={tab.key}
                 type="button"
-                onClick={() => onToggleBus(item.id, item.category)}
-                className={`p-3 border text-left transition-all cursor-pointer ${
-                  isSelected
-                    ? 'border-[#33ff33] bg-[#33ff33]/15 shadow-[0_0_10px_rgba(51,255,51,0.25)]'
-                    : 'border-[#144414] hover:border-[#1a881a]'
+                onClick={() => {
+                  sound.playClick();
+                  setActiveTabIndex(idx);
+                }}
+                className={`px-2 py-1 text-[9px] font-bold tracking-wider border transition-all cursor-pointer ${
+                  isTabActive
+                    ? 'border-[#33ff33] bg-[#33ff33]/20 text-[#33ff33]'
+                    : hasSelection
+                    ? 'border-[#1a881a] bg-[#041204] text-[#28d828] hover:border-[#33ff33]'
+                    : 'border-[#144414] text-[#1a881a] hover:border-[#1a881a] hover:text-[#33ff33]'
                 }`}
               >
-                <div className="flex justify-between items-center gap-2">
-                  <span className="font-bold text-xs text-[#33ff33]">{item.name}</span>
-                  {isSelected && (
-                    <span className="text-[9px] text-amber-400 font-bold shrink-0">[EQUIPPED]</span>
-                  )}
-                </div>
-                <p className="text-[10px] text-[#22bb22] mt-1 leading-snug">{item.description}</p>
-                <div className="mt-2 text-[10px] font-bold text-amber-400">
-                  {item.powerDelta > 0 ? `+${item.powerDelta}W` : `${item.powerDelta}W`} | {item.mass}kg | ${item.cost}M
-                  {item.dataDownlink ? ` | ${item.dataDownlink} kbps` : ''}
-                </div>
+                {hasSelection ? `✓ ${tab.label}` : tab.label}
               </button>
             );
           })}
+        </div>
 
-        {/* PAYLOAD INSTRUMENTS (MULTI-SELECT) */}
-        {activeSlot === 'payload' &&
-          INSTRUMENTS.map((inst) => {
+        {currentTab.ruleBanner && (
+          <div className="mt-2 px-2 py-1 border border-amber-500/60 bg-amber-500/10 text-[10px] font-bold text-amber-300">
+            ⚡ {currentTab.ruleBanner}
+          </div>
+        )}
+      </div>
+
+      {/* Scrollable Option Cards (All 4 cards in the active sub-tab shown together) */}
+      <div className="flex-1 min-h-0 overflow-y-auto pr-1 flex flex-col gap-2">
+        {currentTab.key === 'payload_instruments' &&
+          (visibleItems as typeof INSTRUMENTS).map((inst) => {
             const isSelected = selectedInstruments.includes(inst.id);
             return (
               <button
                 key={inst.id}
                 type="button"
-                onClick={() => onToggleInstrument(inst.id)}
-                className={`p-3 border text-left transition-all cursor-pointer ${
+                onClick={() => {
+                  sound.playClick();
+                  onToggleInstrument(inst.id);
+                }}
+                className={`p-2.5 border text-left transition-all cursor-pointer ${
                   isSelected
                     ? 'border-[#33ff33] bg-[#33ff33]/15 shadow-[0_0_10px_rgba(51,255,51,0.25)]'
                     : 'border-[#144414] hover:border-[#1a881a]'
@@ -135,16 +214,15 @@ export default function PartSideInspector({
                   </span>
                 </div>
                 <p className="text-[10px] text-[#22bb22] mt-1 leading-snug">{inst.description}</p>
-                <div className="mt-2 text-[10px] font-bold text-amber-400">
-                  +{inst.science} PTS | -{inst.power}W | {inst.mass}kg | ${inst.cost}M
+                <div className="mt-1.5 text-[10px] font-bold text-amber-400">
+                  +{inst.science} PTS | -{inst.power}W | {inst.mass}kg | €{inst.cost}M
                 </div>
               </button>
             );
           })}
 
-        {/* LAUNCH VEHICLE OPTIONS */}
-        {activeSlot === 'launcher' &&
-          LAUNCH_VEHICLES.map((lv) => {
+        {currentTab.key === 'launch_vehicle' &&
+          (visibleItems as typeof LAUNCH_VEHICLES).map((lv) => {
             const isSelected = lv.id === selectedLV?.id;
             const cap =
               selectedObjective.orbitType === 'LEO'
@@ -158,7 +236,7 @@ export default function PartSideInspector({
                   sound.playClick();
                   onSelectLV(lv);
                 }}
-                className={`p-3 border text-left transition-all cursor-pointer ${
+                className={`p-2.5 border text-left transition-all cursor-pointer ${
                   isSelected
                     ? 'border-[#33ff33] bg-[#33ff33]/15 shadow-[0_0_10px_rgba(51,255,51,0.25)]'
                     : 'border-[#144414] hover:border-[#1a881a]'
@@ -171,12 +249,94 @@ export default function PartSideInspector({
                   )}
                 </div>
                 <p className="text-[10px] text-[#22bb22] mt-1 leading-snug">{lv.description}</p>
-                <div className="mt-2 text-[10px] font-bold text-amber-400">
-                  MAX PAYLOAD: {cap}kg | COST: ${lv.cost}M | REL: {lv.trl ?? 9.0}
+                <div className="mt-1.5 text-[10px] font-bold text-amber-400">
+                  MAX PAYLOAD: {cap}kg | COST: €{lv.cost}M | Δv: {lv.deltaV ?? 9500} m/s
                 </div>
               </button>
             );
           })}
+
+        {currentTab.key !== 'payload_instruments' &&
+          currentTab.key !== 'launch_vehicle' &&
+          (visibleItems as typeof BUS_COMPONENTS).map((item) => {
+            const isSelected = selectedBus.includes(item.id);
+            const effectiveDraw = item.rfTransmitWatts
+              ? item.rfTransmitWatts * 5
+              : item.powerDelta < 0
+              ? Math.abs(item.powerDelta)
+              : 0;
+
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  sound.playClick();
+                  onToggleBus(item.id);
+                }}
+                className={`p-2.5 border text-left transition-all cursor-pointer ${
+                  isSelected
+                    ? 'border-[#33ff33] bg-[#33ff33]/15 shadow-[0_0_10px_rgba(51,255,51,0.25)]'
+                    : 'border-[#144414] hover:border-[#1a881a]'
+                }`}
+              >
+                <div className="flex justify-between items-center gap-2">
+                  <span className="font-bold text-xs text-[#33ff33]">{item.name}</span>
+                  {isSelected && (
+                    <span className="text-[9px] text-amber-400 font-bold shrink-0">[EQUIPPED]</span>
+                  )}
+                </div>
+                <p className="text-[10px] text-[#22bb22] mt-1 leading-snug">{item.description}</p>
+                <div className="mt-1.5 text-[10px] font-bold text-amber-400">
+                  {item.powerDelta > 0
+                    ? `+${item.powerDelta}W`
+                    : effectiveDraw > 0
+                    ? `-${effectiveDraw}W`
+                    : '0W'}{' '}
+                  | {item.mass}kg | €{item.cost}M
+                  {item.rfTransmitWatts
+                    ? ` | TX: ${item.rfTransmitWatts}W → DRAW: ${item.rfTransmitWatts * 5}W`
+                    : ''}
+                  {item.batteryCapacityWh ? ` | ${item.batteryCapacityWh} Wh` : ''}
+                  {item.deltaVAdded ? ` | +${item.deltaVAdded} m/s Δv` : ''}
+                  {item.pointingAccuracyArcsec ? ` | ${item.pointingAccuracyArcsec}"` : ''}
+                </div>
+              </button>
+            );
+          })}
+      </div>
+
+      {/* Bottom Sub-Tab Navigation Bar: Small Back & Next Buttons */}
+      <div className="shrink-0 pt-2 border-t border-[#144414] flex justify-between items-center gap-2">
+        <button
+          type="button"
+          disabled={!canGoBack}
+          onClick={handleBack}
+          className={`px-2.5 py-1 border text-[10px] font-bold tracking-wider ${
+            canGoBack
+              ? 'border-[#1a881a] text-[#33ff33] hover:bg-[#33ff33]/15 cursor-pointer'
+              : 'border-[#144414] text-[#144414] cursor-not-allowed'
+          }`}
+        >
+          ◄ BACK
+        </button>
+
+        <span className="text-[10px] text-[#1a881a] tracking-widest">
+          {currentTab.label} ({safeTabIndex + 1}/{slotMeta.tabs.length})
+        </span>
+
+        <button
+          type="button"
+          disabled={!canGoNext}
+          onClick={handleNext}
+          className={`px-2.5 py-1 border text-[10px] font-bold tracking-wider ${
+            canGoNext
+              ? 'border-[#1a881a] text-[#33ff33] hover:bg-[#33ff33]/15 cursor-pointer'
+              : 'border-[#144414] text-[#144414] cursor-not-allowed'
+          }`}
+        >
+          NEXT ►
+        </button>
       </div>
     </aside>
   );

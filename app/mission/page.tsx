@@ -14,69 +14,14 @@ import {
   OBJECTIVES,
   BUS_COMPONENTS,
   INSTRUMENTS,
-  LAUNCH_VEHICLES,
+  DIFFICULTY_LEVELS,
+  DifficultyLevel,
+  DifficultyConfig,
 } from '../data/missionData';
 import { OrbitRegime } from '../data/orbitData';
 import { Objective, LaunchVehicle, TelemetryData } from '../types/mission';
 import { evaluateMission, MissionEvaluationResult } from '../lib/evaluateMission';
 import { sound } from '../lib/sound';
-
-// 1. DIFFICULTY TIERS & BUDGET CAPS
-export type DifficultyLevel = 'easy' | 'medium' | 'advanced' | 'expert';
-
-export interface DifficultyConfig {
-  id: DifficultyLevel;
-  label: string;
-  tag: string;
-  description: string;
-  budgets: {
-    starObservation: number; // €M
-    telecom: number; // €M
-  };
-}
-
-export const DIFFICULTY_LEVELS: DifficultyConfig[] = [
-  {
-    id: 'easy',
-    label: 'EASY',
-    tag: 'GENEROUS FUNDING',
-    description: 'Ample engineering reserves and high-margin commercial boosters.',
-    budgets: {
-      starObservation: 700,
-      telecom: 500,
-    },
-  },
-  {
-    id: 'medium',
-    label: 'MEDIUM',
-    tag: 'STANDARD AGENCY',
-    description: 'Realistic institutional budget requiring balanced subsystem trade-offs.',
-    budgets: {
-      starObservation: 214,
-      telecom: 300,
-    },
-  },
-  {
-    id: 'advanced',
-    label: 'ADVANCED',
-    tag: 'CONSTRAINED CAP',
-    description: 'Tight mass-to-cost margins; every watt and kilogram counts.',
-    budgets: {
-      starObservation: 66,
-      telecom: 100,
-    },
-  },
-  {
-    id: 'expert',
-    label: 'EXPERT',
-    tag: 'NEWSPACE / CUBESAT',
-    description: 'Ultra-lean shoestring budget; requires extreme miniaturization.',
-    budgets: {
-      starObservation: 20,
-      telecom: 50,
-    },
-  },
-];
 
 export default function SoloMissionPlanning() {
   const router = useRouter();
@@ -206,7 +151,7 @@ export default function SoloMissionPlanning() {
     router.push('/orbits');
   };
 
-  // Toggle Bus component (one per category: power, comm, adcs)
+  // Toggle Bus component (one per subCategory so each sub-tab can hold an equipped part)
   const handleToggleBus = (id: string) => {
     const target = BUS_COMPONENTS.find((b) => b.id === id);
     if (!target) return;
@@ -215,7 +160,7 @@ export default function SoloMissionPlanning() {
       const isAlreadyEquipped = prev.includes(id);
       const filtered = prev.filter((existingId) => {
         const existing = BUS_COMPONENTS.find((b) => b.id === existingId);
-        return existing?.category !== target.category;
+        return existing?.subCategory !== target.subCategory;
       });
       return isAlreadyEquipped ? filtered : [...filtered, id];
     });
@@ -236,13 +181,14 @@ export default function SoloMissionPlanning() {
     setAssessmentResult(null);
   };
 
-  // Live Spacecraft Telemetry Calculation
+  // Live Spacecraft Telemetry Calculation (includes 5x Radio Power Rule & Contact Multiplier)
   const telemetry: TelemetryData = useMemo(() => {
     let mass = 250; // Dry chassis base mass (kg)
     let cost = 35; // Base integration & engineering cost (€M)
     let powerGen = 0;
     let powerDraw = 80; // Baseline housekeeping draw (W)
     let dataDownlinkCapacity = 0;
+    let contactMultiplier = 1;
     let scienceScore = 0;
 
     selectedBus.forEach((bId) => {
@@ -250,15 +196,25 @@ export default function SoloMissionPlanning() {
       if (!comp) return;
       mass += comp.mass;
       cost += comp.cost;
+
       if (comp.powerDelta > 0) {
         powerGen += comp.powerDelta;
+      } else if (comp.rfTransmitWatts) {
+        // Power rule: Radio draws 5x the power it transmits
+        powerDraw += comp.rfTransmitWatts * 5;
       } else {
         powerDraw += Math.abs(comp.powerDelta);
       }
+
       if (comp.dataDownlink) {
         dataDownlinkCapacity += comp.dataDownlink;
       }
+      if (comp.contactMultiplier) {
+        contactMultiplier = Math.max(contactMultiplier, comp.contactMultiplier);
+      }
     });
+
+    dataDownlinkCapacity = Math.round(dataDownlinkCapacity * contactMultiplier * 10) / 10;
 
     let dataGenerated = 0;
     selectedInstruments.forEach((iId) => {
@@ -316,23 +272,23 @@ export default function SoloMissionPlanning() {
 
   // Equipped labels for 3D hardpoint pills
   const equippedLabels: Record<SpacecraftPartSlot, string> = useMemo(() => {
-    const getBusLabel = (cat: 'power' | 'comm' | 'adcs') => {
-      const id = selectedBus.find(
-        (bId) => BUS_COMPONENTS.find((c) => c.id === bId)?.category === cat
-      );
-      return BUS_COMPONENTS.find((c) => c.id === id)?.name || 'UNASSIGNED';
+    const getSlotSummary = (cat: 'power' | 'comm' | 'propulsion' | 'adcs' | 'systems') => {
+      const names = selectedBus
+        .map((bId) => BUS_COMPONENTS.find((c) => c.id === bId))
+        .filter((c) => c?.category === cat)
+        .map((c) => c!.name);
+      return names.length > 0 ? `${names.length} EQUIPPED` : 'UNASSIGNED';
     };
 
-    const instNames = selectedInstruments
-      .map((id) => INSTRUMENTS.find((i) => i.id === id)?.name)
-      .filter(Boolean);
-
     return {
-      power: getBusLabel('power'),
-      comm: getBusLabel('comm'),
-      adcs: getBusLabel('adcs'),
-      payload: instNames.length > 0 ? instNames.join(', ') : 'NO PAYLOAD',
-      launcher: selectedLV ? selectedLV.name : 'NO BOOSTER',
+      power: getSlotSummary('power'),
+      comm: getSlotSummary('comm'),
+      propulsion: selectedLV ? selectedLV.name : getSlotSummary('propulsion'),
+      adcs:
+        selectedInstruments.length > 0
+          ? `${selectedInstruments.length} PAYLOAD(S)`
+          : getSlotSummary('adcs'),
+      systems: getSlotSummary('systems'),
     };
   }, [selectedBus, selectedInstruments, selectedLV]);
 
@@ -342,8 +298,8 @@ export default function SoloMissionPlanning() {
       const cat = BUS_COMPONENTS.find((c) => c.id === bId)?.category;
       if (cat) set.add(cat);
     });
-    if (selectedInstruments.length > 0) set.add('payload');
-    if (selectedLV) set.add('launcher');
+    if (selectedLV) set.add('propulsion');
+    if (selectedInstruments.length > 0) set.add('adcs');
     return set;
   }, [selectedBus, selectedInstruments, selectedLV]);
 
@@ -548,7 +504,7 @@ export default function SoloMissionPlanning() {
                 />
               </div>
 
-             {/* Right Side Subsystem Inspector (Locks to 3D stage's exact height on lg+) */}
+              {/* Right Side Subsystem Inspector (Locks to 3D stage's exact height on lg+) */}
               <div
                 data-tour-target="part-inspector"
                 className="lg:col-span-5 relative min-h-105 lg:min-h-0"

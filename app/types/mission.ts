@@ -1,54 +1,58 @@
-export type MissionPathId = 'star_obs' | 'telecom';
-
-export type CoolingGrade = 'ambient' | 'thermal_iso' | 'minus_40c' | 'minus_85c' | 'cryo_160k';
-
-export type OrbitCompatibility = 'LEO' | 'LEO_POLAR' | 'GEO' | 'SOLAR_ORBIT' | 'L2';
-
-export interface RiskFactor {
-  id: string;
-  label: string;
-  probabilityPercent: number; // Chance of triggering on-orbit during /simulation
-  severity: 'MINOR' | 'MAJOR' | 'CRITICAL';
-  triggerCondition: string;
-  inOrbitEventDescription: string;
-}
+export type BusSubCategory =
+  | 'batteries'
+  | 'solar_panels'
+  | 'comm_frequency'
+  | 'comm_contact'
+  | 'comm_transceiver'
+  | 'propulsion'
+  | 'adcs'
+  | 'structure'
+  | 'radiation'
+  | 'thermal'
+  | 'obc'
+  | 'eol';
 
 export interface Objective {
-  id: MissionPathId;
+  id: string;
   name: string;
   target: string;
   description: string;
-  maxBudget: number; // Retained for telemetry display; difficulty tiers excluded
+  maxBudget: number;
   minScience: number;
-  requiredDeltaV: number;
-  lifespanYears: number;
-  orbitType: 'LEO' | 'GEO' | 'DEEP_SPACE';
-  // Hard Pass/Fail Requirements from Mission Spec
-  requirements: {
-    maxPointingArcsec?: number;     // Star Obs: < 60 arcsec
-    minDataGbitPerDay: number;      // Star Obs: > 1 Gbit/day | Telecom: > 100 Gbit/day
-    minStarsSimultaneous?: number;  // Star Obs: >= 10 stars
-    maxLatencyMinutes?: number;     // Telecom: < 90 minutes
-    minLifetimeYears: number;       // Star Obs: >= 1 yr | Telecom: > 2 yrs
+  requiredDeltaV?: number;
+  lifespanYears?: number;
+  orbitType?: 'LEO' | 'GEO' | 'DEEP_SPACE';
+  requirements?: {
+    maxPointingArcsec?: number;
+    minDataGbitPerDay?: number;
+    minStarsSimultaneous?: number;
+    maxLatencyMinutes?: number;
+    minLifetimeYears?: number;
   };
 }
 
 export interface BusComponent {
   id: string;
   name: string;
-  category: 'power' | 'comm' | 'adcs';
+  category: 'power' | 'comm' | 'propulsion' | 'adcs' | 'systems';
+  subCategory: BusSubCategory;
   mass: number;
   cost: number;
-  powerDelta: number;
-  dataDownlink?: number;          // Base Gbit/day downlink capacity
-  pointingAccuracyArcsec?: number; // Lower is better (e.g., 0.5 arcsec vs 90 arcsec)
-  coolingProvided?: CoolingGrade;  // Thermal capability bundled with bus/avionics
-  radiationShieldingMm?: number;   // e.g., 2mm thin-skin vs 10mm Al (CoRoT)
-  hasRedundancy?: boolean;         // Dual-redundant DPU / RF backup
-  groundSegmentType?: 'mid_latitude' | 'polar_station' | 'geo_relay';
+  powerDelta: number; // Positive = generated (W), Negative = drawn (W)
+  rfTransmitWatts?: number; // Enforces 5x power draw rule (draw = 5 * rfTransmitWatts)
+  batteryCapacityWh?: number;
+  deltaVAdded?: number;
   degradationRate?: number;
+  dataDownlink?: number;
+  contactMultiplier?: number;
+  frequencyBand?: 'UHF' | 'S-Band' | 'X-Band' | 'Ka-Band' | 'Optical';
+  pointingAccuracyArcsec?: number;
+  radiationShieldingMm?: number;
+  coolingProvided?: 'ambient' | 'thermal_iso' | 'minus_40c' | 'minus_85c' | 'cryo_160k';
+  groundSegmentType?: 'mid_latitude' | 'polar_station' | 'geo_relay';
+  hasRedundancy?: boolean;
   trl?: number;
-  riskPenaltyPercent?: number;     // Adds to cumulative on-orbit risk %
+  riskPenaltyPercent?: number;
   riskNote?: string;
   description: string;
 }
@@ -56,21 +60,21 @@ export interface BusComponent {
 export interface Instrument {
   id: string;
   name: string;
-  path: MissionPathId;
-  type: string;
-  referenceMission: string;
+  path?: 'star_obs' | 'telecom';
+  type?: string;
+  referenceMission?: string;
   mass: number;
   cost: number;
   power: number;
-  dataRate: number;               // Gbit/day generated
+  dataRate: number;
   science: number;
   apertureCm?: number;
-  simultaneousStars?: number;     // Star Obs: ASTERIA=1, BRITE=15, CoRoT=6000, Kepler=100000, Gaia=2B
-  requiredPointingArcsec: number; // Maximum tolerable jitter
-  requiredCooling: CoolingGrade;  // Detector thermal requirement
-  compatibleOrbits: OrbitCompatibility[];
-  isLaserLink?: boolean;          // True for TBIRD, LCRD, Tesat LCT (cloud-sensitive)
-  isEstimated?: boolean;          // Flags labelled estimates from spec
+  simultaneousStars?: number;
+  requiredPointingArcsec?: number;
+  requiredCooling?: 'ambient' | 'thermal_iso' | 'minus_40c' | 'minus_85c' | 'cryo_160k';
+  compatibleOrbits?: string[];
+  isLaserLink?: boolean;
+  isEstimated?: boolean;
   trl?: number;
   description: string;
 }
@@ -81,7 +85,7 @@ export interface LaunchVehicle {
   cost: number;
   maxPayloadLEO: number;
   maxPayloadDeepSpace: number;
-  deltaV: number;
+  deltaV?: number;
   trl?: number;
   description: string;
 }
