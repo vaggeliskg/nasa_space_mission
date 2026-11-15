@@ -36,17 +36,19 @@ export function evaluateMission(
 
   // 1. Aggregate spacecraft mass, power, Delta-V, and TRL stats
   let totalMass = 250; // Dry chassis base mass (kg)
+  let totalCost = 0;
   let bolPower = 0;
   let powerDraw = 80; // Baseline housekeeping draw (W)
   let degradationRate = 0.025; // Default 2.5% annual solar degradation
   const trlValues: number[] = [];
 
-  selectedBus.forEach((bId) => {
+selectedBus.forEach((bId) => {
     const comp = BUS_COMPONENTS.find((c) => c.id === bId) as
       | (typeof BUS_COMPONENTS[number] & { trl?: number; degradationRate?: number })
       | undefined;
     if (comp) {
       totalMass += comp.mass;
+      totalCost += comp.cost;
       if (comp.powerDelta > 0) {
         bolPower += comp.powerDelta;
         if (typeof comp.degradationRate === 'number') {
@@ -60,32 +62,35 @@ export function evaluateMission(
   });
 
   selectedInstruments.forEach((iId) => {
-    const inst = INSTRUMENTS.find((i) => i.id === iId) as
-      | (typeof INSTRUMENTS[number] & { trl?: number })
-      | undefined;
-    if (inst) {
-      totalMass += inst.mass;
-      powerDraw += inst.power;
-      trlValues.push(inst.trl ?? 8.0);
-    }
-  });
+      const inst = INSTRUMENTS.find((i) => i.id === iId) as
+        | (typeof INSTRUMENTS[number] & { trl?: number })
+        | undefined;
+      if (inst) {
+        totalMass += inst.mass;
+        totalCost += inst.cost;
+        powerDraw += inst.power;
+        trlValues.push(inst.trl ?? 8.0);
+      }
+    });
+    
 
   const missionExt = mission as Objective & {
-    requiredDeltaV?: number;
-    lifespanYears?: number;
-    orbitType?: 'LEO' | 'GEO' | 'DEEP_SPACE';
-  };
+      requiredDeltaV?: number;
+      lifespanYears?: number;
+      orbitType?: 'LEO' | 'GEO' | 'DEEP_SPACE';
+    };
 
-  const lvExt = selectedLV as
-    | (LaunchVehicle & {
-        deltaV?: number;
-        trl?: number;
-      })
-    | null;
+    const lvExt = selectedLV as
+      | (LaunchVehicle & {
+          deltaV?: number;
+          trl?: number;
+        })
+      | null;
 
-  if (lvExt) {
-    trlValues.push(lvExt.trl ?? 9.0);
-  }
+    if (lvExt) {
+      totalCost += lvExt.cost;
+      trlValues.push(lvExt.trl ?? 9.0);
+    }
 
 const orbitType = missionExt.orbitType ?? 'LEO';
 
@@ -149,6 +154,13 @@ const orbitType = missionExt.orbitType ?? 'LEO';
   if (bolPower < powerDraw) {
     binaryErrors.push(
       `POWER GATE (BOL) FAILED: GENERATED POWER (${bolPower} W) < SYSTEM DRAW (${powerDraw} W).`
+    );
+  }
+  
+  if (totalCost > mission.maxBudget) {
+    const overBy = totalCost - mission.maxBudget;
+    binaryErrors.push(
+      `BUDGET GATE FAILED: TOTAL COST (€${totalCost}M) EXCEEDS ALLOCATED ${mission.name.toUpperCase()} BUDGET (€${mission.maxBudget}M) BY €${overBy}M.`
     );
   }
 

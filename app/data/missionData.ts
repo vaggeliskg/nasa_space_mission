@@ -470,6 +470,63 @@ export const LAUNCH_VEHICLES: LaunchVehicle[] = [
   },
 ];
 
+
+export type DifficultyLevel = 'easy' | 'medium' | 'advanced' | 'expert';
+
+export interface DifficultyConfig {
+  id: DifficultyLevel;
+  label: string;
+  tag: string;
+  description: string;
+  budgets: {
+    starObservation: number; // €M
+    telecom: number;         // €M
+  };
+}
+
+export const DIFFICULTY_LEVELS: DifficultyConfig[] = [
+  {
+    id: 'easy',
+    label: 'EASY',
+    tag: 'GENEROUS FUNDING',
+    description: 'Ample engineering reserves and high-margin commercial boosters.',
+    budgets: {
+      starObservation: 700,
+      telecom: 500,
+    },
+  },
+  {
+    id: 'medium',
+    label: 'MEDIUM',
+    tag: 'STANDARD AGENCY',
+    description: 'Realistic institutional budget requiring balanced subsystem trade-offs.',
+    budgets: {
+      starObservation: 214,
+      telecom: 300,
+    },
+  },
+  {
+    id: 'advanced',
+    label: 'ADVANCED',
+    tag: 'CONSTRAINED CAP',
+    description: 'Tight mass-to-cost margins; every watt and kilogram counts.',
+    budgets: {
+      starObservation: 66,
+      telecom: 100,
+    },
+  },
+  {
+    id: 'expert',
+    label: 'EXPERT',
+    tag: 'NEWSPACE / CUBESAT',
+    description: 'Ultra-lean shoestring budget; requires extreme miniaturization.',
+    budgets: {
+      starObservation: 20,
+      telecom: 50,
+    },
+  },
+];
+
 // Reference mission comparison table for the post-simulation report screen
 export const REFERENCE_MISSIONS = {
   star_obs: [

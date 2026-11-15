@@ -21,14 +21,73 @@ import { Objective, LaunchVehicle, TelemetryData } from '../types/mission';
 import { evaluateMission, MissionEvaluationResult } from '../lib/evaluateMission';
 import { sound } from '../lib/sound';
 
+// 1. DIFFICULTY TIERS & BUDGET CAPS
+export type DifficultyLevel = 'easy' | 'medium' | 'advanced' | 'expert';
+
+export interface DifficultyConfig {
+  id: DifficultyLevel;
+  label: string;
+  tag: string;
+  description: string;
+  budgets: {
+    starObservation: number; // €M
+    telecom: number; // €M
+  };
+}
+
+export const DIFFICULTY_LEVELS: DifficultyConfig[] = [
+  {
+    id: 'easy',
+    label: 'EASY',
+    tag: 'GENEROUS FUNDING',
+    description: 'Ample engineering reserves and high-margin commercial boosters.',
+    budgets: {
+      starObservation: 700,
+      telecom: 500,
+    },
+  },
+  {
+    id: 'medium',
+    label: 'MEDIUM',
+    tag: 'STANDARD AGENCY',
+    description: 'Realistic institutional budget requiring balanced subsystem trade-offs.',
+    budgets: {
+      starObservation: 214,
+      telecom: 300,
+    },
+  },
+  {
+    id: 'advanced',
+    label: 'ADVANCED',
+    tag: 'CONSTRAINED CAP',
+    description: 'Tight mass-to-cost margins; every watt and kilogram counts.',
+    budgets: {
+      starObservation: 66,
+      telecom: 100,
+    },
+  },
+  {
+    id: 'expert',
+    label: 'EXPERT',
+    tag: 'NEWSPACE / CUBESAT',
+    description: 'Ultra-lean shoestring budget; requires extreme miniaturization.',
+    budgets: {
+      starObservation: 20,
+      telecom: 50,
+    },
+  },
+];
+
 export default function SoloMissionPlanning() {
   const router = useRouter();
   const [viewMode, setViewMode] = useState<'objective' | 'assembly'>('objective');
   const [selectedObjective, setSelectedObjective] = useState<Objective>(OBJECTIVES[0]);
+  const [pendingObjective, setPendingObjective] = useState<Objective | null>(null);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyLevel>('medium');
   const [selectedOrbit, setSelectedOrbit] = useState<OrbitRegime | null>(null);
   const [activeSlot, setActiveSlot] = useState<SpacecraftPartSlot | null>(null);
 
-  // Selected components state
+  // Selected components state (empty by default so all 5 hardpoints start unassigned)
   const [selectedBus, setSelectedBus] = useState<string[]>([]);
   const [selectedInstruments, setSelectedInstruments] = useState<string[]>([]);
   const [selectedLV, setSelectedLV] = useState<LaunchVehicle | null>(null);
@@ -36,34 +95,55 @@ export default function SoloMissionPlanning() {
   // Evaluation & Tutorial states
   const [assessmentResult, setAssessmentResult] =
     useState<MissionEvaluationResult | null>(null);
+  const [isAssessing, setIsAssessing] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
 
+  // Helper to resolve budget cap by mission type & difficulty
+  const getDifficultyBudget = (obj: Objective, diff: DifficultyConfig): number => {
+    const isTelecom =
+      obj.id.toLowerCase().includes('telecom') ||
+      obj.id.toLowerCase().includes('comm') ||
+      obj.name.toLowerCase().includes('telecom');
+
+    return isTelecom ? diff.budgets.telecom : diff.budgets.starObservation;
+  };
+
+  // Close Difficulty modal when pressing Escape
   useEffect(() => {
-  if (typeof window === 'undefined' || viewMode !== 'assembly') return;
+    if (!pendingObjective) return;
 
-  const hasSeenTour = localStorage.getItem('vabTourSeen');
-  if (!hasSeenTour) {
-    const timer = setTimeout(() => {
-      setShowHelpModal(true);
-      localStorage.setItem('vabTourSeen', 'true');
-    }, 350);
-    return () => clearTimeout(timer);
-  }
-}, [viewMode]);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        sound.playClick();
+        setPendingObjective(null);
+      }
+    };
 
-  // Restore Mission Path + Confirmed Orbit Regime when returning from /orbits
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [pendingObjective]);
+
+  // Restore Mission Path (with difficulty budget) + Confirmed Orbit Regime when returning from /orbits
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const rawMission = sessionStorage.getItem('selectedMissionPath');
     const rawOrbit = sessionStorage.getItem('selectedOrbitRegime');
+    const savedDiff = sessionStorage.getItem('selectedDifficulty') as DifficultyLevel | null;
+
+    if (savedDiff) {
+      setSelectedDifficulty(savedDiff);
+    }
 
     if (rawMission) {
       try {
         const parsedMission = JSON.parse(rawMission) as Objective;
         const matched = OBJECTIVES.find((o) => o.id === parsedMission.id);
         if (matched) {
-          setSelectedObjective(matched);
+          setSelectedObjective({
+            ...matched,
+            maxBudget: parsedMission.maxBudget ?? matched.maxBudget,
+          });
         }
       } catch {
         // Ignore malformed sessionStorage
@@ -81,18 +161,48 @@ export default function SoloMissionPlanning() {
     }
   }, []);
 
-  // Step 1: Select Mission Path -> save to sessionStorage -> push to /orbits
+  // Auto-open VAB Guide tour on first entry into assembly view
+  useEffect(() => {
+    if (typeof window === 'undefined' || viewMode !== 'assembly') return;
+
+    const hasSeenTour = localStorage.getItem('vabTourSeen');
+    if (!hasSeenTour) {
+      const timer = setTimeout(() => {
+        setShowHelpModal(true);
+        localStorage.setItem('vabTourSeen', 'true');
+      }, 350);
+      return () => clearTimeout(timer);
+    }
+  }, [viewMode]);
+
+  // Step 1A: Click Mission Path -> open Difficulty modal
   const handleSelectObjective = (obj: Objective) => {
     sound.playClick();
-    setSelectedObjective(obj);
+    setPendingObjective(obj);
+  };
+
+  // Step 1B: Confirm Difficulty -> apply budget cap -> save to sessionStorage -> push to /orbits
+  const handleConfirmDifficulty = (diff: DifficultyConfig) => {
+    if (!pendingObjective) return;
+    sound.playBoot();
+
+    const overriddenObjective: Objective = {
+      ...pendingObjective,
+      maxBudget: getDifficultyBudget(pendingObjective, diff),
+    };
+
+    setSelectedDifficulty(diff.id);
+    setSelectedObjective(overriddenObjective);
     setSelectedInstruments([]);
     setAssessmentResult(null);
 
     if (typeof window !== 'undefined') {
-      sessionStorage.setItem('selectedMissionPath', JSON.stringify(obj));
+      sessionStorage.setItem('selectedMissionPath', JSON.stringify(overriddenObjective));
+      sessionStorage.setItem('selectedDifficulty', diff.id);
       sessionStorage.removeItem('selectedOrbitRegime');
     }
 
+    setPendingObjective(null);
     router.push('/orbits');
   };
 
@@ -237,9 +347,7 @@ export default function SoloMissionPlanning() {
     return set;
   }, [selectedBus, selectedInstruments, selectedLV]);
 
-  const [isAssessing, setIsAssessing] = useState(false);
-
-  // Run Pre-Launch Flight Readiness Assessment
+  // Run Pre-Launch Flight Readiness Assessment with 3-second diagnostic delay
   const handleRunAssessment = () => {
     if (isAssessing) return;
     sound.playClick();
@@ -271,6 +379,7 @@ export default function SoloMissionPlanning() {
         'missionConfig',
         JSON.stringify({
           objective: selectedObjective,
+          difficulty: selectedDifficulty,
           orbitRegime: selectedOrbit,
           bus: selectedBus,
           instruments: selectedInstruments,
@@ -300,7 +409,8 @@ export default function SoloMissionPlanning() {
             {viewMode === 'assembly' && (
               <span className="text-[11px] text-[#28d828] border border-[#144414] px-2 py-0.5 bg-[#041004]">
                 PATH: {selectedObjective.name.toUpperCase()}
-                {selectedOrbit ? ` // ORBIT: ${selectedOrbit.name}` : ''}
+                {selectedOrbit ? ` // ORBIT: ${selectedOrbit.name}` : ''} //{' '}
+                {selectedDifficulty.toUpperCase()} (€{selectedObjective.maxBudget}M)
               </span>
             )}
           </div>
@@ -349,13 +459,70 @@ export default function SoloMissionPlanning() {
           </div>
         </header>
 
-        {/* VIEW 1: MISSION PATH SELECTION */}
+        {/* VIEW 1: MISSION PATH SELECTION + DIFFICULTY MODAL */}
         {viewMode === 'objective' ? (
           <div className="my-auto py-4">
             <StageObjective
               selected={selectedObjective}
               onSelect={handleSelectObjective}
             />
+
+            {/* DIFFICULTY & BUDGET CAP OVERLAY */}
+            {pendingObjective && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+                <div className="w-full max-w-2xl border-2 border-[#33ff33] bg-[#030903] p-6 shadow-[0_0_30px_rgba(51,255,51,0.3)] flex flex-col gap-5 font-mono">
+                  <div className="flex justify-between items-start border-b border-[#144414] pb-3">
+                    <div>
+                      <div className="text-[10px] tracking-widest text-amber-400">
+                        PHASE 01B // FUNDING ALLOCATION &amp; DIFFICULTY
+                      </div>
+                      <h2 className="text-base sm:text-lg font-bold text-[#33ff33] mt-0.5">
+                        SELECT MISSION BUDGET TIER — {pendingObjective.name.toUpperCase()}
+                      </h2>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        sound.playClick();
+                        setPendingObjective(null);
+                      }}
+                      className="px-2.5 py-1 border border-[#144414] text-xs text-[#1a881a] hover:border-[#33ff33] hover:text-[#33ff33] cursor-pointer"
+                    >
+                      [ESC]
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {DIFFICULTY_LEVELS.map((diff) => {
+                      const budget = getDifficultyBudget(pendingObjective, diff);
+                      return (
+                        <button
+                          key={diff.id}
+                          type="button"
+                          onClick={() => handleConfirmDifficulty(diff)}
+                          className="p-4 border-2 border-[#1a881a] bg-[#041004]/90 hover:border-[#33ff33] hover:bg-[#33ff33]/15 text-left transition-all cursor-pointer flex flex-col justify-between gap-2 group"
+                        >
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-bold tracking-wider text-[#33ff33] group-hover:text-white">
+                              {diff.label}
+                            </span>
+                            <span className="text-xs font-bold px-2 py-0.5 border border-amber-400/70 text-amber-300 bg-amber-500/10">
+                              €{budget}M CAP
+                            </span>
+                          </div>
+                          <div className="text-[10px] tracking-widest text-amber-400">
+                            {diff.tag}
+                          </div>
+                          <p className="text-[11px] text-[#22bb22] leading-snug">
+                            {diff.description}
+                          </p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           /* VIEW 2: 3D VAB SPACECRAFT ASSEMBLY */
@@ -381,12 +548,12 @@ export default function SoloMissionPlanning() {
                 />
               </div>
 
-              {/* Right Side Subsystem Inspector (Flexes to fill vertical space) */}
+             {/* Right Side Subsystem Inspector (Locks to 3D stage's exact height on lg+) */}
               <div
                 data-tour-target="part-inspector"
-                className="lg:col-span-5 flex flex-col"
+                className="lg:col-span-5 relative min-h-105 lg:min-h-0"
               >
-                <div className="flex-1 flex flex-col *:flex-1">
+                <div className="lg:absolute lg:inset-0 flex flex-col min-h-0">
                   <PartSideInspector
                     activeSlot={activeSlot}
                     selectedBus={selectedBus}
@@ -445,7 +612,24 @@ export default function SoloMissionPlanning() {
 
               <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                 <div className="flex-1 w-full">
-                  {assessmentResult ? (
+                  {isAssessing ? (
+                    <div className="flex items-center gap-2 text-xs text-amber-300">
+                      <svg
+                        className="w-4 h-4 text-amber-400 animate-spin shrink-0"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+                      </svg>
+                      <span>
+                        VERIFYING MASS, POWER, POINTING, AND COOLING MARGINS...
+                      </span>
+                    </div>
+                  ) : assessmentResult ? (
                     <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1 text-[11px]">
                       {assessmentResult.feedbackLog.map((line, i) => (
                         <div
@@ -477,18 +661,23 @@ export default function SoloMissionPlanning() {
                 >
                   <button
                     type="button"
+                    disabled={isAssessing}
                     onClick={handleRunAssessment}
-                    className="flex-1 lg:flex-initial py-2.5 px-4 border border-amber-400 bg-amber-500/15 text-amber-300 hover:bg-amber-500/25 text-xs font-bold tracking-wider cursor-pointer"
+                    className={`flex-1 lg:flex-initial py-2.5 px-4 border text-xs font-bold tracking-wider ${
+                      isAssessing
+                        ? 'border-amber-500/40 text-amber-500/50 cursor-not-allowed'
+                        : 'border-amber-400 bg-amber-500/15 text-amber-300 hover:bg-amber-500/25 cursor-pointer'
+                    }`}
                   >
-                    RUN READINESS CHECK
+                    {isAssessing ? 'ASSESSING...' : 'RUN READINESS CHECK'}
                   </button>
 
                   <button
                     type="button"
-                    disabled={!assessmentResult?.passed}
+                    disabled={!assessmentResult?.passed || isAssessing}
                     onClick={handleLaunch}
                     className={`flex-1 lg:flex-initial py-2.5 px-5 border text-xs font-bold tracking-wider transition-all ${
-                      assessmentResult?.passed
+                      assessmentResult?.passed && !isAssessing
                         ? 'border-[#33ff33] bg-[#33ff33]/25 text-[#33ff33] hover:bg-[#33ff33]/40 cursor-pointer shadow-[0_0_15px_rgba(51,255,51,0.35)]'
                         : 'border-[#144414] text-[#144414] cursor-not-allowed'
                     }`}
