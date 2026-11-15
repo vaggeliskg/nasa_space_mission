@@ -207,7 +207,7 @@ export default function SoloMissionPlanning() {
     setAssessmentResult(null);
   };
 
-  const telemetry: TelemetryData = useMemo(() => {
+const telemetry: TelemetryData = useMemo(() => {
     const busTotals = calculateBusSelectionTotals(selectedBus, selectedOrbit);
 
     let mass = 250 + busTotals.mass; // Dry chassis base mass (kg) + bus
@@ -216,17 +216,14 @@ export default function SoloMissionPlanning() {
     let powerDraw = 80 + busTotals.powerDraw; // Baseline housekeeping draw (W) + bus
     const dataDownlinkCapacity =
       Math.round(busTotals.dataDownlink * busTotals.contactMultiplier * 10) / 10;
-    let scienceScore = 0;
 
-    let dataGenerated = 0;
+    // Payloads contribute mass, cost, and power draw only (do not alter scienceScore or datalink)
     selectedInstruments.forEach((iId) => {
       const inst = INSTRUMENTS.find((i) => i.id === iId);
       if (!inst) return;
       mass += inst.mass;
       cost += inst.cost;
       powerDraw += inst.power;
-      dataGenerated += inst.dataRate;
-      scienceScore += inst.science;
     });
 
     const activeCfg = getActiveLVConfig(selectedLV);
@@ -263,9 +260,9 @@ export default function SoloMissionPlanning() {
       powerDraw,
       netPower,
       batteryWh: busTotals.totalBatteryWh,
-      dataGenerated,
+      dataGenerated: 0,
       dataDownlinkCapacity,
-      scienceScore,
+      scienceScore: 0,
       minScience: selectedObjective.minScience,
       isLaunchViable,
     };

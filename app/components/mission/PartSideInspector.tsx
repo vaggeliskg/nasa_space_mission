@@ -92,7 +92,7 @@ const SLOT_CONFIG: Record<
 };
 
 function formatComponentPrice(item: BusComponent, qty = 1): string {
-  if (item.priceEur) {
+  if (typeof item.priceEur === 'number') {
     if (qty > 1) {
       const totalEur =
         item.priceEur + (qty - 1) * (item.extraUnitPriceEur ?? item.priceEur);
@@ -255,13 +255,14 @@ export default function PartSideInspector({
 
       {/* Scrollable Option Cards */}
       <div className="flex-1 min-h-0 overflow-y-auto pr-1 flex flex-col gap-2">
-        {/* PAYLOADS (4.2 PAYLOAD) */}
+        {/* PAYLOADS (4.2 PAYLOAD — DOES NOT INTERFERE WITH SCIENCE POINTS OR DATALINK) */}
         {currentTab.key === 'payload_instruments' &&
           (visibleItems as typeof INSTRUMENTS).map((inst) => {
             const isSelected = selectedInstruments.includes(inst.id);
-            const priceLabel = inst.priceEur
-              ? `€${inst.priceEur.toLocaleString()}`
-              : `€${inst.cost}M`;
+            const priceLabel =
+              typeof inst.priceEur === 'number'
+                ? `€${inst.priceEur.toLocaleString()}`
+                : `€${inst.cost}M`;
             const powerLabel =
               inst.power >= 1000
                 ? `${(inst.power / 1000).toLocaleString()}kW`
@@ -291,7 +292,7 @@ export default function PartSideInspector({
                 </div>
                 <p className="text-[10px] text-[#22bb22] mt-1 leading-snug">{inst.description}</p>
                 <div className="mt-1.5 text-[10px] font-bold text-amber-400">
-                  +{inst.science} PTS | -{powerLabel} | {formatMassLabel(inst.mass)} | {priceLabel}
+                  -{powerLabel} | {formatMassLabel(inst.mass)} | {priceLabel}
                 </div>
               </button>
             );
@@ -588,12 +589,58 @@ export default function PartSideInspector({
             );
           })}
 
+        {/* PROPULSION (3.1 PROPULSION) */}
+        {currentTab.key === 'propulsion' &&
+          (visibleItems as BusComponent[]).map((item) => {
+            const isSelected = selectedBus.includes(item.id);
+            const effectiveDraw = item.powerDelta < 0 ? Math.abs(item.powerDelta) : 0;
+
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  sound.playClick();
+                  onToggleBus(item.id);
+                }}
+                className={`p-2.5 border text-left transition-all cursor-pointer ${
+                  isSelected
+                    ? 'border-[#33ff33] bg-[#33ff33]/15 shadow-[0_0_10px_rgba(51,255,51,0.25)]'
+                    : 'border-[#144414] hover:border-[#1a881a]'
+                }`}
+              >
+                <div className="flex justify-between items-center gap-2">
+                  <span className="font-bold text-xs text-[#33ff33]">{item.name}</span>
+                  {isSelected && (
+                    <span className="text-[9px] text-amber-400 font-bold shrink-0">[EQUIPPED]</span>
+                  )}
+                </div>
+
+                {item.fits && (
+                  <div className="text-[9px] text-amber-300/90 mt-0.5">
+                    FITS: {item.fits.toUpperCase()}
+                  </div>
+                )}
+
+                <p className="text-[10px] text-[#22bb22] mt-1 leading-snug">{item.description}</p>
+
+                <div className="mt-1.5 text-[10px] font-bold text-amber-400">
+                  ISP: {item.ispSeconds ? `${item.ispSeconds.toLocaleString()} s` : 'NONE'} | ΔV
+                  (10%): +{item.deltaVAdded ?? 0} m/s |{' '}
+                  {effectiveDraw > 0 ? `-${effectiveDraw}W` : '0W'} |{' '}
+                  {formatMassLabel(item.mass)} | {formatComponentPrice(item, 1)}
+                </div>
+              </button>
+            );
+          })}
+
         {/* ALL OTHER BUS SUB-TABS */}
         {currentTab.key !== 'payload_instruments' &&
           currentTab.key !== 'launch_vehicle' &&
           currentTab.key !== 'batteries' &&
           currentTab.key !== 'comm' &&
           currentTab.key !== 'adcs' &&
+          currentTab.key !== 'propulsion' &&
           (visibleItems as BusComponent[]).map((item) => {
             const isSelected = selectedBus.includes(item.id);
             const effectiveDraw = item.powerDelta < 0 ? Math.abs(item.powerDelta) : 0;

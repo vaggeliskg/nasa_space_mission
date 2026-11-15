@@ -36,24 +36,25 @@ export interface BusComponent {
   fits?: string;
   category: 'power' | 'comm' | 'propulsion' | 'adcs' | 'systems';
   subCategory: BusSubCategory;
-  mass: number; // First unit mass (kg)
-  extraUnitMass?: number; // Additional stacked unit mass (kg), if different from first unit
-  cost: number; // First unit cost (€M)
-  extraUnitCost?: number; // Additional stacked unit cost (€M), if different from first unit
-  priceEur?: number; // Exact EUR unit price for display
-  extraUnitPriceEur?: number; // Exact EUR extra pack price for display
+  mass: number;
+  extraUnitMass?: number;
+  cost: number; // €M
+  extraUnitCost?: number;
+  priceEur?: number;
+  extraUnitPriceEur?: number;
   maxUnits?: number;
   powerDelta: number; // Positive = generated (W), Negative = drawn (W DC)
   rfTransmitWatts?: number;
   batteryCapacityWh?: number;
+  ispSeconds?: number;
   deltaVAdded?: number;
   degradationRate?: number;
-  dataDownlink?: number; // Default Gbit/day
+  dataDownlink?: number;
   downlinkByRegime?: {
-    leoHighIncl: number | null; // 400km LEO high inclination (90° Polar / 98° SSO)
-    leoLowIncl: number | null; // 400km LEO low inclination (28.5° / 51.6°)
-    l2: number | null; // Sun-Earth L2
-    gso?: number | null; // 35,786km GSO
+    leoHighIncl: number | null;
+    leoLowIncl: number | null;
+    l2: number | null;
+    gso?: number | null;
   };
   linkType?: string;
   groundNetwork?: string;
@@ -82,10 +83,10 @@ export interface Instrument {
   referenceMission?: string;
   mass: number;
   cost: number; // €M
-  priceEur?: number; // Exact EUR price for sub-€1M display
+  priceEur?: number;
   power: number; // W
-  dataRate: number; // Gbit/day
-  science: number;
+  dataRate: number; // Internal reference only (does not interfere with HUD datalink)
+  science: number; // Internal reference only (does not interfere with HUD science points)
   apertureCm?: number;
   simultaneousStars?: number;
   requiredPointingArcsec?: number;
@@ -98,12 +99,12 @@ export interface Instrument {
 }
 
 export interface LaunchVehicleCapacities {
-  leo28_5: number | null; // 400km 28.5 deg
-  leo51_6: number | null; // 400km 51.6 deg
-  leoPolar: number | null; // 400km Polar (90 deg)
-  leoSSO: number | null; // 400km SSO (98 deg)
-  gso: number | null; // 35,786km GTO/GSO
-  l2: number | null; // L2 (C3 = 0)
+  leo28_5: number | null;
+  leo51_6: number | null;
+  leoPolar: number | null;
+  leoSSO: number | null;
+  gso: number | null;
+  l2: number | null;
 }
 
 export interface LaunchVehicleConfiguration {
