@@ -84,7 +84,7 @@ function OrbitRingAndMarker({
         Math.cos(haloAngle) * 0.45
       );
     } else {
-      const speed = regime.id === 'LEO' ? 0.9 : 0.12;
+      const speed = regime.id === 'LEO' ? 0.9 : -0.12;
       const angle = t * speed;
       markerRef.current.position.set(
         Math.cos(angle) * regime.visualRadius,

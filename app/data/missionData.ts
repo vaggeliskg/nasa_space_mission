@@ -713,14 +713,14 @@ export const BUS_COMPONENTS: BusComponent[] = [
 
 export const INSTRUMENTS: Instrument[] = [
   // =========================================================================
-  // PATH 1: STAR OBSERVATION INSTRUMENTS (5 CARDS)
+  // PATH 1: STAR OBSERVATION PAYLOADS (5 CARDS)
   // =========================================================================
   {
     id: 'inst_asteria',
-    name: 'ASTERIA 6cm CMOS Photometer',
+    name: 'Compact CMOS camera, 6 cm',
     path: 'star_obs',
     type: '6.07 cm Lens + Piezo CMOS',
-    referenceMission: 'ASTERIA (NASA/JPL, 6U CubeSat)',
+    referenceMission: 'ASTERIA', // Internal reference (hidden from player)
     mass: 6,
     cost: 15,
     power: 18,
@@ -734,14 +734,14 @@ export const INSTRUMENTS: Instrument[] = [
     isEstimated: true,
     trl: 8.5,
     description:
-      '6.07 cm f/1.4 Zeiss lens with CMOS imager. Achieves high precision on 1 target star at a time (Power: est.).',
+      '6.07 cm f/1.4 precision lens with CMOS imager. Achieves high photometric precision on 1 target star at a time (Power: est.).',
   },
   {
     id: 'inst_brite',
-    name: 'BRITE Wide-Field Nanosat Telescope',
+    name: 'Wide-field nano-telescope, 3 cm',
     path: 'star_obs',
     type: '3 cm Wide-FOV Photometer (24°)',
-    referenceMission: 'BRITE Constellation (Austria/Canada/Poland)',
+    referenceMission: 'BRITE', // Internal reference (hidden from player)
     mass: 7,
     cost: 18,
     power: 15,
@@ -755,14 +755,14 @@ export const INSTRUMENTS: Instrument[] = [
     isEstimated: true,
     trl: 9.0,
     description:
-      '24° wide-field 3 cm telescope observing up to 15 bright stars simultaneously in LEO (Power/Data: est.).',
+      '24° wide-field 3 cm optical photometer observing up to 15 bright stars simultaneously in LEO (Power/Data: est.).',
   },
   {
     id: 'inst_corot',
-    name: 'CoRoT 27cm 4-CCD Space Telescope',
+    name: 'Small CCD telescope, 27 cm',
     path: 'star_obs',
     type: '27 cm Off-Axis Telescope + 4 CCDs (16.8 MP)',
-    referenceMission: 'CoRoT (CNES + ESA, 896 km Polar)',
+    referenceMission: 'CoRoT', // Internal reference (hidden from player)
     mass: 300,
     cost: 120,
     power: 150,
@@ -775,14 +775,14 @@ export const INSTRUMENTS: Instrument[] = [
     compatibleOrbits: ['LEO_POLAR', 'LEO'],
     trl: 9.0,
     description:
-      '27 cm telescope monitoring up to 6,000 stars at once at 1.5 Gbit/day. Requires -40°C focal box cooling.',
+      '27 cm off-axis telescope monitoring up to 6,000 stars at once at 1.5 Gbit/day. Requires -40°C focal box cooling.',
   },
   {
     id: 'inst_kepler',
-    name: 'Kepler 0.95m Schmidt Photometer',
+    name: 'Wide-field photometer, 95 cm',
     path: 'star_obs',
     type: '0.95 m Schmidt Telescope + 42 CCDs (95 MP)',
-    referenceMission: 'Kepler (NASA, Earth-Trailing Solar Orbit)',
+    referenceMission: 'Kepler', // Internal reference (hidden from player)
     mass: 478,
     cost: 260,
     power: 280,
@@ -796,14 +796,14 @@ export const INSTRUMENTS: Instrument[] = [
     isEstimated: true,
     trl: 9.0,
     description:
-      '95-megapixel focal plane surveying 100,000 stars simultaneously. Requires -85°C radiator cooling (Power: est.).',
+      '95-megapixel Schmidt focal plane surveying 100,000 stars simultaneously. Requires -85°C radiator cooling (Power: est.).',
   },
   {
     id: 'inst_gaia',
-    name: 'Gaia Dual Astrometric & Spectro Telescope',
+    name: 'Dual-telescope survey instrument',
     path: 'star_obs',
     type: 'Dual 1.45×0.5 m Mirrors + 106 CCDs (938 MP)',
-    referenceMission: 'Gaia (ESA, Sun-Earth L2)',
+    referenceMission: 'Gaia', // Internal reference (hidden from player)
     mass: 710,
     cost: 420,
     power: 627,
@@ -816,7 +816,7 @@ export const INSTRUMENTS: Instrument[] = [
     compatibleOrbits: ['L2'],
     trl: 9.0,
     description:
-      'Twin telescopes with nearly 1 billion pixels mapping 2 billion stars from L2. Demands 160 K sunshield stability.',
+      'Twin astrometric & spectroscopic telescopes with nearly 1 billion pixels mapping 2 billion stars. Demands 160 K sunshield stability.',
   },
 
   // =========================================================================
@@ -824,10 +824,10 @@ export const INSTRUMENTS: Instrument[] = [
   // =========================================================================
   {
     id: 'inst_opssat_xband',
-    name: 'OPS-SAT EWC27 X-Band Radio',
+    name: 'Compact X-band radio',
     path: 'telecom',
     type: '50 Mbps X-Band RF Payload',
-    referenceMission: 'ESA OPS-SAT (Low-Cost CubeSat RF)',
+    referenceMission: 'OPS-SAT EWC27', // Internal reference (hidden from player)
     mass: 1,
     cost: 8,
     power: 10,
@@ -839,14 +839,14 @@ export const INSTRUMENTS: Instrument[] = [
     isLaserLink: false,
     trl: 9.5,
     description:
-      '0.3 kg, 10 W X-band transmitter (50 Mbps). Needs a polar ground station to exceed 100 Gbit/day.',
+      'Compact 50 Mbps X-band RF transmitter. Pairs with high-latitude polar ground stations to exceed 100 Gbit/day.',
   },
   {
     id: 'inst_tbird',
-    name: 'TBIRD 200 Gbps Laser Terminal + 2TB SSD',
+    name: 'CubeSat laser terminal',
     path: 'telecom',
     type: 'Direct-to-Earth Optical Laser + 2 TB Buffer',
-    referenceMission: 'TBIRD (NASA, 6U CubeSat LEO)',
+    referenceMission: 'TBIRD', // Internal reference (hidden from player)
     mass: 3,
     cost: 22,
     power: 100,
@@ -858,14 +858,14 @@ export const INSTRUMENTS: Instrument[] = [
     isLaserLink: true,
     trl: 8.0,
     description:
-      '3 kg optical terminal delivering up to 4.8 TB/pass via 200 Gbps laser. Vulnerable to cloud cover without RF backup.',
+      '3 kg optical laser terminal delivering up to 4.8 TB/pass at 200 Gbps. Vulnerable to cloud cover without RF backup.',
   },
   {
     id: 'inst_lcrd',
-    name: 'LCRD Dual Optical Relay Terminals',
+    name: 'Laser relay terminal pair',
     path: 'telecom',
     type: '10.8 cm Dual Laser Relay (1.2 Gbps)',
-    referenceMission: 'LCRD (NASA, GEO Hosted Relay)',
+    referenceMission: 'LCRD', // Internal reference (hidden from player)
     mass: 65,
     cost: 90,
     power: 130,
@@ -879,14 +879,14 @@ export const INSTRUMENTS: Instrument[] = [
     isEstimated: true,
     trl: 8.5,
     description:
-      'Dual GEO optical relay terminals providing 1.2 Gbps low-latency space-to-ground routing (Mass/Power: est.).',
+      'Dual optical relay terminals providing 1.2 Gbps low-latency space-to-ground routing (Mass/Power: est.).',
   },
   {
     id: 'inst_edrs_tesat',
-    name: 'EDRS-C Tesat 2nd-Gen Laser Terminal',
+    name: 'GEO laser relay terminal',
     path: 'telecom',
     type: '13.5 cm LEO-to-GEO Laser Relay (1.8 Gbps)',
-    referenceMission: 'EDRS-C (ESA + Airbus, GEO)',
+    referenceMission: 'Tesat LCT (EDRS)', // Internal reference (hidden from player)
     mass: 53,
     cost: 155,
     power: 160,
@@ -899,14 +899,14 @@ export const INSTRUMENTS: Instrument[] = [
     isLaserLink: true,
     trl: 9.0,
     description:
-      '1.8 Gbps (50 TB/day) GEO relay across 45,000 km with Ka-band feeder, eliminating the 90-minute LEO latency delay.',
+      '1.8 Gbps (50 TB/day) optical relay terminal with Ka-band feeder, eliminating the 90-minute LEO latency delay.',
   },
   {
     id: 'inst_alphasat_lband',
-    name: 'Alphasat 11m L-Band Multi-Beam Service',
+    name: 'Mobile service payload (L-band)',
     path: 'telecom',
     type: '11 m Reflector + 8 DSPs (200+ Spot Beams)',
-    referenceMission: 'Alphasat (ESA + Inmarsat, GEO)',
+    referenceMission: 'Alphasat', // Internal reference (hidden from player)
     mass: 1850,
     cost: 340,
     power: 1600,
@@ -920,7 +920,7 @@ export const INSTRUMENTS: Instrument[] = [
     isEstimated: true,
     trl: 9.0,
     description:
-      'Massive 11 m unfurlable reflector serving 750+ user channels across 200+ spot beams directly to ground terminals.',
+      '11 m unfurlable L-band reflector serving 750+ user channels across 200+ spot beams directly to mobile terminals.',
   },
 ];
 

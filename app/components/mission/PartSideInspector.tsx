@@ -14,6 +14,8 @@ import {
 } from '../../data/missionData';
 import { sound } from '../../lib/sound';
 
+export type InspectorSubTabKey = BusSubCategory | 'payload_instruments' | 'launch_vehicle';
+
 interface PartSideInspectorProps {
   activeSlot: SpacecraftPartSlot | null;
   selectedObjective: Objective;
@@ -24,12 +26,11 @@ interface PartSideInspectorProps {
   onToggleBus: (id: string) => void;
   onToggleInstrument: (id: string) => void;
   onSelectLV: (lv: LaunchVehicle) => void;
+  onSubTabChange?: (tabKey: InspectorSubTabKey | null) => void;
 }
 
-type SubTabKey = BusSubCategory | 'payload_instruments' | 'launch_vehicle';
-
 interface SubTabDef {
-  key: SubTabKey;
+  key: InspectorSubTabKey;
   label: string;
   ruleBanner?: string;
 }
@@ -65,7 +66,7 @@ const SLOT_CONFIG: Record<
   },
   propulsion: {
     code: 'HP-03 // ORBITAL MANEUVERING',
-    title: '3.1 PROPULSION & LAUNCH BOOSTER',
+    title: 'PROPULSION & LAUNCH BOOSTER',
     tabs: [
       { key: 'propulsion', label: '3.1 PROPULSION' },
       { key: 'launch_vehicle', label: '3.2 LAUNCH VEHICLE' },
@@ -73,10 +74,10 @@ const SLOT_CONFIG: Record<
   },
   adcs: {
     code: 'HP-04 // ATTITUDE & PAYLOAD BAY',
-    title: '4.1 ADCS & SCIENCE INSTRUMENTS',
+    title: 'ATTITUDE DETERMINATION AND CONTROL SYSTEM & PAYLOADS',
     tabs: [
       { key: 'adcs', label: '4.1 ADCS (ATTITUDE)' },
-      { key: 'payload_instruments', label: '4.2 PAYLOADS' },
+      { key: 'payload_instruments', label: '4.2 PAYLOAD' },
     ],
   },
   systems: {
@@ -102,12 +103,24 @@ export default function PartSideInspector({
   onToggleBus,
   onToggleInstrument,
   onSelectLV,
+  onSubTabChange,
 }: PartSideInspectorProps) {
   const [activeTabIndex, setActiveTabIndex] = useState(0);
 
   useEffect(() => {
     setActiveTabIndex(0);
   }, [activeSlot]);
+
+  useEffect(() => {
+    if (!onSubTabChange) return;
+    if (!activeSlot) {
+      onSubTabChange(null);
+      return;
+    }
+    const tabs = SLOT_CONFIG[activeSlot].tabs;
+    const safeIdx = Math.min(activeTabIndex, tabs.length - 1);
+    onSubTabChange(tabs[safeIdx]?.key ?? null);
+  }, [activeSlot, activeTabIndex, onSubTabChange]);
 
   if (!activeSlot) {
     return (
@@ -126,9 +139,18 @@ export default function PartSideInspector({
   const safeTabIndex = Math.min(activeTabIndex, slotMeta.tabs.length - 1);
   const currentTab = slotMeta.tabs[safeTabIndex];
 
+  const isTelecomMission =
+    selectedObjective.id.toLowerCase().includes('telecom') ||
+    selectedObjective.id.toLowerCase().includes('comm') ||
+    selectedObjective.name.toLowerCase().includes('telecom');
+
+  const missionInstruments = INSTRUMENTS.filter((inst) =>
+    isTelecomMission ? inst.path === 'telecom' : inst.path === 'star_obs'
+  );
+
   const visibleItems =
     currentTab.key === 'payload_instruments'
-      ? INSTRUMENTS
+      ? missionInstruments
       : currentTab.key === 'launch_vehicle'
       ? LAUNCH_VEHICLES
       : BUS_COMPONENTS.filter((c) => c.subCategory === currentTab.key);
@@ -225,9 +247,11 @@ export default function PartSideInspector({
               >
                 <div className="flex justify-between items-center gap-2">
                   <span className="font-bold text-xs text-[#33ff33]">{inst.name}</span>
-                  <span className="text-[9px] text-amber-400 font-bold shrink-0">
-                    {isSelected ? '[MOUNTED]' : '[+ MOUNT]'}
-                  </span>
+                  {isSelected && (
+                    <span className="text-[9px] text-amber-400 font-bold shrink-0">
+                      [EQUIPPED]
+                    </span>
+                  )}
                 </div>
                 <p className="text-[10px] text-[#22bb22] mt-1 leading-snug">{inst.description}</p>
                 <div className="mt-1.5 text-[10px] font-bold text-amber-400">
