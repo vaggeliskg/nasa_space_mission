@@ -34,10 +34,17 @@ export interface Objective {
 export interface BusComponent {
   id: string;
   name: string;
+  maker?: string;
+  fits?: string;
   category: 'power' | 'comm' | 'propulsion' | 'adcs' | 'systems';
   subCategory: BusSubCategory;
-  mass: number;
-  cost: number;
+  mass: number; // First unit mass (kg)
+  extraUnitMass?: number; // Additional stacked unit mass (kg), if different from first unit
+  cost: number; // First unit cost (€M)
+  extraUnitCost?: number; // Additional stacked unit cost (€M), if different from first unit
+  priceEur?: number; // Exact EUR unit price for display
+  extraUnitPriceEur?: number; // Exact EUR extra pack price for display
+  maxUnits?: number; // Optional max stack limit
   powerDelta: number; // Positive = generated (W), Negative = drawn (W)
   rfTransmitWatts?: number; // Enforces 5x power draw rule (draw = 5 * rfTransmitWatts)
   batteryCapacityWh?: number;

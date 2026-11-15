@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { SpacecraftPartSlot } from './InteractiveSpacecraftStage';
-import { Objective, LaunchVehicle, BusSubCategory } from '../../types/mission';
+import { Objective, LaunchVehicle, BusSubCategory, BusComponent } from '../../types/mission';
 import { OrbitRegime } from '../../data/orbitData';
 import {
   BUS_COMPONENTS,
@@ -24,6 +24,7 @@ interface PartSideInspectorProps {
   selectedInstruments: string[];
   selectedLV: LaunchVehicle | null;
   onToggleBus: (id: string) => void;
+  onAdjustBusQuantity?: (id: string, delta: number) => void;
   onToggleInstrument: (id: string) => void;
   onSelectLV: (lv: LaunchVehicle) => void;
   onSubTabChange?: (tabKey: InspectorSubTabKey | null) => void;
@@ -47,7 +48,11 @@ const SLOT_CONFIG: Record<
     code: 'HP-01 // ELECTRICAL POWER SYSTEM',
     title: 'BATTERIES & SOLAR ARRAYS',
     tabs: [
-      { key: 'batteries', label: '1.1 BATTERIES' },
+      {
+        key: 'batteries',
+        label: '1.1 BATTERIES',
+        ruleBanner: 'STACKABLE: Use + / - to stack multiple battery packs.',
+      },
       { key: 'solar_panels', label: '1.2 SOLAR PANELS' },
     ],
   },
@@ -66,7 +71,7 @@ const SLOT_CONFIG: Record<
   },
   propulsion: {
     code: 'HP-03 // ORBITAL MANEUVERING',
-    title: 'PROPULSION & LAUNCH BOOSTER',
+    title: '3.1 PROPULSION & LAUNCH BOOSTER',
     tabs: [
       { key: 'propulsion', label: '3.1 PROPULSION' },
       { key: 'launch_vehicle', label: '3.2 LAUNCH VEHICLE' },
@@ -74,7 +79,7 @@ const SLOT_CONFIG: Record<
   },
   adcs: {
     code: 'HP-04 // ATTITUDE & PAYLOAD BAY',
-    title: 'ATTITUDE DETERMINATION AND CONTROL SYSTEM & PAYLOADS',
+    title: '4.1 ADCS & SCIENCE PAYLOAD',
     tabs: [
       { key: 'adcs', label: '4.1 ADCS (ATTITUDE)' },
       { key: 'payload_instruments', label: '4.2 PAYLOAD' },
@@ -93,6 +98,18 @@ const SLOT_CONFIG: Record<
   },
 };
 
+function formatComponentPrice(item: BusComponent, qty = 1): string {
+  if (item.priceEur) {
+    if (qty > 1) {
+      const totalEur =
+        item.priceEur + (qty - 1) * (item.extraUnitPriceEur ?? item.priceEur);
+      return `€${totalEur.toLocaleString()} (${qty}x)`;
+    }
+    return `€${item.priceEur.toLocaleString()}`;
+  }
+  return `€${item.cost}M`;
+}
+
 export default function PartSideInspector({
   activeSlot,
   selectedObjective,
@@ -101,6 +118,7 @@ export default function PartSideInspector({
   selectedInstruments,
   selectedLV,
   onToggleBus,
+  onAdjustBusQuantity,
   onToggleInstrument,
   onSelectLV,
   onSubTabChange,
@@ -296,7 +314,6 @@ export default function PartSideInspector({
                 </div>
                 <p className="text-[10px] text-[#22bb22] mt-1 leading-snug">{lv.description}</p>
 
-                {/* Booster Configuration Selector Pills */}
                 <div className="mt-2 pt-1.5 border-t border-[#144414]/80">
                   <div className="text-[9px] tracking-wider text-[#1a881a] mb-1">
                     BOOSTER CONFIGURATION:
@@ -345,9 +362,101 @@ export default function PartSideInspector({
             );
           })}
 
+        {/* STACKABLE BATTERIES (1.1 BATTERIES WITH + AND - CONTROLS) */}
+        {currentTab.key === 'batteries' &&
+          (visibleItems as BusComponent[]).map((item) => {
+            const qty = selectedBus.filter((id) => id === item.id).length;
+            const isSelected = qty > 0;
+            const totalWh = (item.batteryCapacityWh ?? 0) * qty;
+            const totalMass =
+              qty > 0
+                ? Math.round(
+                    (item.mass + (qty - 1) * (item.extraUnitMass ?? item.mass)) * 100
+                  ) / 100
+                : item.mass;
+
+            const adjustQty = (delta: number) => {
+              sound.playClick();
+              if (onAdjustBusQuantity) {
+                onAdjustBusQuantity(item.id, delta);
+              } else {
+                onToggleBus(item.id);
+              }
+            };
+
+            return (
+              <div
+                key={item.id}
+                onClick={() => {
+                  if (qty === 0) adjustQty(1);
+                }}
+                className={`p-2.5 border text-left transition-all ${
+                  isSelected
+                    ? 'border-[#33ff33] bg-[#33ff33]/15 shadow-[0_0_10px_rgba(51,255,51,0.25)]'
+                    : 'border-[#144414] hover:border-[#1a881a] cursor-pointer'
+                }`}
+              >
+                <div className="flex justify-between items-center gap-2">
+                  <span className="font-bold text-xs text-[#33ff33]">{item.name}</span>
+
+                  {/* + / - Stack Counter */}
+                  <div
+                    className="flex items-center gap-1.5 shrink-0"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      type="button"
+                      disabled={qty === 0}
+                      onClick={() => adjustQty(-1)}
+                      className={`w-6 h-6 border text-xs font-bold flex items-center justify-center ${
+                        qty > 0
+                          ? 'border-[#33ff33] bg-[#041404] text-[#33ff33] hover:bg-[#33ff33]/20 cursor-pointer'
+                          : 'border-[#144414] text-[#144414] cursor-not-allowed'
+                      }`}
+                    >
+                      -
+                    </button>
+                    <span className="min-w-8 text-center text-xs font-bold text-amber-400">
+                      {qty}x
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => adjustQty(1)}
+                      className="w-6 h-6 border border-[#33ff33] bg-[#041404] text-[#33ff33] hover:bg-[#33ff33]/20 text-xs font-bold flex items-center justify-center cursor-pointer"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                {item.fits && (
+                  <div className="text-[9px] text-amber-300/90 mt-0.5">
+                    FITS: {item.fits.toUpperCase()}
+                  </div>
+                )}
+
+                <p className="text-[10px] text-[#22bb22] mt-1 leading-snug">{item.description}</p>
+
+                <div className="mt-1.5 text-[10px] font-bold text-amber-400">
+                  {qty > 0
+                    ? `TOTAL: ${totalWh.toLocaleString()} Wh | ${totalMass} kg | ${formatComponentPrice(
+                        item,
+                        qty
+                      )}`
+                    : `UNIT: ${item.batteryCapacityWh} Wh | ${item.mass} kg | ${formatComponentPrice(
+                        item,
+                        1
+                      )}`}
+                </div>
+              </div>
+            );
+          })}
+
+        {/* ALL OTHER BUS SUB-TABS (INCLUDING SOLAR PANELS P2–P5) */}
         {currentTab.key !== 'payload_instruments' &&
           currentTab.key !== 'launch_vehicle' &&
-          (visibleItems as typeof BUS_COMPONENTS).map((item) => {
+          currentTab.key !== 'batteries' &&
+          (visibleItems as BusComponent[]).map((item) => {
             const isSelected = selectedBus.includes(item.id);
             const effectiveDraw = item.rfTransmitWatts
               ? item.rfTransmitWatts * 5
@@ -375,6 +484,13 @@ export default function PartSideInspector({
                     <span className="text-[9px] text-amber-400 font-bold shrink-0">[EQUIPPED]</span>
                   )}
                 </div>
+
+                {item.fits && (
+                  <div className="text-[9px] text-amber-300/90 mt-0.5">
+                    FITS: {item.fits.toUpperCase()}
+                  </div>
+                )}
+
                 <p className="text-[10px] text-[#22bb22] mt-1 leading-snug">{item.description}</p>
                 <div className="mt-1.5 text-[10px] font-bold text-amber-400">
                   {item.powerDelta > 0
@@ -382,11 +498,10 @@ export default function PartSideInspector({
                     : effectiveDraw > 0
                     ? `-${effectiveDraw}W`
                     : '0W'}{' '}
-                  | {item.mass}kg | €{item.cost}M
+                  | {item.mass}kg | {formatComponentPrice(item, 1)}
                   {item.rfTransmitWatts
                     ? ` | TX: ${item.rfTransmitWatts}W → DRAW: ${item.rfTransmitWatts * 5}W`
                     : ''}
-                  {item.batteryCapacityWh ? ` | ${item.batteryCapacityWh} Wh` : ''}
                   {item.deltaVAdded ? ` | +${item.deltaVAdded} m/s Δv` : ''}
                   {item.pointingAccuracyArcsec ? ` | ${item.pointingAccuracyArcsec}"` : ''}
                 </div>
@@ -395,7 +510,7 @@ export default function PartSideInspector({
           })}
       </div>
 
-      {/* Bottom Sub-Tab Navigation Bar: Small Back & Next Buttons */}
+      {/* Bottom Sub-Tab Navigation Bar */}
       <div className="shrink-0 pt-2 border-t border-[#144414] flex justify-between items-center gap-2">
         <button
           type="button"
