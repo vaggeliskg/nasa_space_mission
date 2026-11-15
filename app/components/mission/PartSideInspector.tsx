@@ -64,7 +64,7 @@ const SLOT_CONFIG: Record<
   },
   adcs: {
     code: 'HP-04 // ATTITUDE & PAYLOAD BAY',
-    title: '4.1 ADCS & SCIENCE INSTRUMENTS',
+    title: '4.1 ATTITUDE DETERMINATION AND CONTROL SYSTEM',
     tabs: [
       { key: 'adcs', label: '4.1 ADCS (ATTITUDE)' },
       { key: 'payload_instruments', label: '4.2 PAYLOADS' },
