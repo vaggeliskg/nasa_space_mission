@@ -59,7 +59,7 @@ const TOUR_STEPS: TourStep[] = [
     tag: 'VAB // SENSORS',
     title: 'SCIENTIFIC INSTRUMENTS',
     targetSelector: '[data-tour-target="part-inspector"]',
-    slotToSelect: 'payload',
+    slotToSelect: 'adcs',
     summary:
       'Equip Optical Imagers, SAR, Spectrometers, or Magnetometers to generate Science Points.',
     whyItMatters:
@@ -70,7 +70,7 @@ const TOUR_STEPS: TourStep[] = [
     tag: 'VAB // PROPULSION',
     title: 'BOOSTER SELECTION & LAUNCH',
     targetSelector: '[data-tour-target="launch-button"]',
-    slotToSelect: 'launcher',
+    slotToSelect: 'propulsion',
     summary:
       'Select a launch booster rated for your spacecraft mass in HP-05, then click EXECUTE LAUNCH once all checks turn green.',
     whyItMatters:
