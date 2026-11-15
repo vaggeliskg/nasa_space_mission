@@ -87,22 +87,22 @@ export function evaluateMission(
     trlValues.push(lvExt.trl ?? 9.0);
   }
 
+const orbitType = missionExt.orbitType ?? 'LEO';
+
   const rocketCapacity = lvExt
-    ? mission.id === 'earth_obs'
+    ? orbitType === 'LEO'
       ? lvExt.maxPayloadLEO
       : lvExt.maxPayloadDeepSpace
     : 0;
 
   // Default Delta-V budgets (m/s) if not explicitly defined on mission/LV objects yet
   const missionDeltaV =
-    missionExt.requiredDeltaV ?? (mission.id === 'earth_obs' ? 9400 : 12800);
+    missionExt.requiredDeltaV ?? (orbitType === 'LEO' ? 9400 : 12800);
   const totalDeltaV = lvExt
-    ? lvExt.deltaV ?? (mission.id === 'earth_obs' ? 9600 : 13100)
+    ? lvExt.deltaV ?? (orbitType === 'LEO' ? 9600 : 13100)
     : 0;
 
   const lifespanYears = missionExt.lifespanYears ?? 5;
-  const orbitType =
-    missionExt.orbitType ?? (mission.id === 'earth_obs' ? 'LEO' : 'GEO');
 
   const avgTrl =
     trlValues.length > 0

@@ -2,12 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { sound } from '../lib/sound';
 import Starfield from '../components/StarField';
-
-import { Objective, LaunchVehicle, TelemetryData } from '../types/mission';
-import { OBJECTIVES, BUS_COMPONENTS, INSTRUMENTS, LAUNCH_VEHICLES } from '../data/missionData';
-
 import TelemetryHud from '../components/mission/TelemetryHud';
 import StageObjective from '../components/mission/StageObjective';
 import InteractiveSpacecraftStage, {
@@ -15,122 +10,158 @@ import InteractiveSpacecraftStage, {
 } from '../components/mission/InteractiveSpacecraftStage';
 import PartSideInspector from '../components/mission/PartSideInspector';
 import MissionHelpModal from '../components/mission/MissionHelpModal';
+import {
+  OBJECTIVES,
+  BUS_COMPONENTS,
+  INSTRUMENTS,
+  LAUNCH_VEHICLES,
+} from '../data/missionData';
+import { OrbitRegime } from '../data/orbitData';
+import { Objective, LaunchVehicle, TelemetryData } from '../types/mission';
 import { evaluateMission, MissionEvaluationResult } from '../lib/evaluateMission';
+import { sound } from '../lib/sound';
 
 export default function SoloMissionPlanning() {
   const router = useRouter();
   const [viewMode, setViewMode] = useState<'objective' | 'assembly'>('objective');
+  const [selectedObjective, setSelectedObjective] = useState<Objective>(OBJECTIVES[0]);
+  const [selectedOrbit, setSelectedOrbit] = useState<OrbitRegime | null>(null);
   const [activeSlot, setActiveSlot] = useState<SpacecraftPartSlot | null>(null);
 
-  const [selectedObjective, setSelectedObjective] = useState<Objective>(OBJECTIVES[0]);
-  const [selectedBus, setSelectedBus] = useState<string[]>([]);
+  // Selected components state
+  const [selectedBus, setSelectedBus] = useState<string[]>([
+    'pwr_standard_600w',
+    'comm_sband_midlat',
+    'adcs_piezo_fine',
+  ]);
   const [selectedInstruments, setSelectedInstruments] = useState<string[]>([]);
   const [selectedLV, setSelectedLV] = useState<LaunchVehicle | null>(null);
-  const [isHelpOpen, setIsHelpOpen] = useState(false);
-  const [isAssessing, setIsAssessing] = useState(false);
-  const [assessmentResult, setAssessmentResult] = useState<MissionEvaluationResult | null>(null);
+
+  // Evaluation & Tutorial states
+  const [assessmentResult, setAssessmentResult] =
+    useState<MissionEvaluationResult | null>(null);
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   useEffect(() => {
-    setAssessmentResult(null);
-  }, [selectedObjective, selectedBus, selectedInstruments, selectedLV]);
+  if (typeof window === 'undefined' || viewMode !== 'assembly') return;
 
+  const hasSeenTour = localStorage.getItem('vabTourSeen');
+  if (!hasSeenTour) {
+    const timer = setTimeout(() => {
+      setShowHelpModal(true);
+      localStorage.setItem('vabTourSeen', 'true');
+    }, 350);
+    return () => clearTimeout(timer);
+  }
+}, [viewMode]);
+
+  // Restore Mission Path + Confirmed Orbit Regime when returning from /orbits
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const raw = sessionStorage.getItem('selectedOrbitRegime');
-    if (raw) {
+
+    const rawMission = sessionStorage.getItem('selectedMissionPath');
+    const rawOrbit = sessionStorage.getItem('selectedOrbitRegime');
+
+    if (rawMission) {
       try {
-        const orbit = JSON.parse(raw) as { id: string; mappedObjectiveId: string };
-        const matched = OBJECTIVES.find((o) => o.id === orbit.mappedObjectiveId);
+        const parsedMission = JSON.parse(rawMission) as Objective;
+        const matched = OBJECTIVES.find((o) => o.id === parsedMission.id);
         if (matched) {
           setSelectedObjective(matched);
-          setViewMode('assembly');
-          if (!sessionStorage.getItem('vabTourSeen')) {
-            setIsHelpOpen(true);
-            sessionStorage.setItem('vabTourSeen', 'true');
-          }
         }
       } catch {
-        // Ignore malformed storage
+        // Ignore malformed sessionStorage
+      }
+    }
+
+    if (rawMission && rawOrbit) {
+      try {
+        const parsedOrbit = JSON.parse(rawOrbit) as OrbitRegime;
+        setSelectedOrbit(parsedOrbit);
+        setViewMode('assembly');
+      } catch {
+        // Ignore malformed sessionStorage
       }
     }
   }, []);
-  
 
-  const handleRunAssessment = () => {
-  if (isAssessing) return;
-  sound.playClick();
-  setIsAssessing(true);
-  setAssessmentResult(null);
+  // Step 1: Select Mission Path -> save to sessionStorage -> push to /orbits
+  const handleSelectObjective = (obj: Objective) => {
+    sound.playClick();
+    setSelectedObjective(obj);
+    setSelectedInstruments([]);
+    setAssessmentResult(null);
 
-  setTimeout(() => {
-    const result = evaluateMission(
-      {
-        selectedBus,
-        selectedInstruments,
-        selectedLV,
-      },
-      selectedObjective
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('selectedMissionPath', JSON.stringify(obj));
+      sessionStorage.removeItem('selectedOrbitRegime');
+    }
+
+    router.push('/orbits');
+  };
+
+  // Toggle Bus component (one per category: power, comm, adcs)
+  const handleToggleBus = (id: string) => {
+    const target = BUS_COMPONENTS.find((b) => b.id === id);
+    if (!target) return;
+
+    setSelectedBus((prev) => {
+      const filtered = prev.filter((existingId) => {
+        const existing = BUS_COMPONENTS.find((b) => b.id === existingId);
+        return existing?.category !== target.category;
+      });
+      return [...filtered, id];
+    });
+    setAssessmentResult(null);
+  };
+
+  // Toggle Payload Instrument
+  const handleToggleInstrument = (id: string) => {
+    setSelectedInstruments((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
-    setAssessmentResult(result);
-    setIsAssessing(false);
-    if (result.passed) {
-      sound.playBoot();
-    } else {
-      sound.playBlip();
-    }
-  }, 3000);
-};
+    setAssessmentResult(null);
+  };
 
-  // Tracks which hardpoints currently have an active spec chosen
-  const configuredSlots = useMemo(() => {
-    const slots = new Set<SpacecraftPartSlot>();
-    if (selectedBus.some((id) => BUS_COMPONENTS.find((c) => c.id === id)?.category === 'power')) {
-      slots.add('power');
-    }
-    if (selectedBus.some((id) => BUS_COMPONENTS.find((c) => c.id === id)?.category === 'comm')) {
-      slots.add('comm');
-    }
-    if (selectedBus.some((id) => BUS_COMPONENTS.find((c) => c.id === id)?.category === 'adcs')) {
-      slots.add('adcs');
-    }
-    if (selectedInstruments.length > 0) {
-      slots.add('payload');
-    }
-    if (selectedLV !== null) {
-      slots.add('launcher');
-    }
-    return slots;
-  }, [selectedBus, selectedInstruments, selectedLV]);
+  // Select Launch Vehicle
+  const handleSelectLV = (lv: LaunchVehicle) => {
+    setSelectedLV(lv);
+    setAssessmentResult(null);
+  };
 
+  // Live Spacecraft Telemetry Calculation
   const telemetry: TelemetryData = useMemo(() => {
-    let mass = 250; // Dry chassis base mass
-    let cost = 15; // Ground operations baseline
+    let mass = 250; // Dry chassis base mass (kg)
+    let cost = 35; // Base integration & engineering cost (€M)
     let powerGen = 0;
-    let powerDraw = 80; // Baseline housekeeping draw
-    let dataGenerated = 0;
+    let powerDraw = 80; // Baseline housekeeping draw (W)
     let dataDownlinkCapacity = 0;
     let scienceScore = 0;
 
     selectedBus.forEach((bId) => {
       const comp = BUS_COMPONENTS.find((c) => c.id === bId);
-      if (comp) {
-        mass += comp.mass;
-        cost += comp.cost;
-        if (comp.powerDelta > 0) powerGen += comp.powerDelta;
-        else powerDraw += Math.abs(comp.powerDelta);
-        if (comp.dataDownlink) dataDownlinkCapacity += comp.dataDownlink;
+      if (!comp) return;
+      mass += comp.mass;
+      cost += comp.cost;
+      if (comp.powerDelta > 0) {
+        powerGen += comp.powerDelta;
+      } else {
+        powerDraw += Math.abs(comp.powerDelta);
+      }
+      if (comp.dataDownlink) {
+        dataDownlinkCapacity += comp.dataDownlink;
       }
     });
 
+    let dataGenerated = 0;
     selectedInstruments.forEach((iId) => {
       const inst = INSTRUMENTS.find((i) => i.id === iId);
-      if (inst) {
-        mass += inst.mass;
-        cost += inst.cost;
-        powerDraw += inst.power;
-        dataGenerated += inst.dataRate;
-        scienceScore += inst.science;
-      }
+      if (!inst) return;
+      mass += inst.mass;
+      cost += inst.cost;
+      powerDraw += inst.power;
+      dataGenerated += inst.dataRate;
+      scienceScore += inst.science;
     });
 
     if (selectedLV) {
@@ -138,19 +169,25 @@ export default function SoloMissionPlanning() {
     }
 
     const netPower = powerGen - powerDraw;
+    const isLeoMission = selectedOrbit
+      ? selectedOrbit.id === 'LEO'
+      : selectedObjective.orbitType === 'LEO';
+
     const maxCapacity = selectedLV
-      ? selectedObjective.id === 'earth_obs'
+      ? isLeoMission
         ? selectedLV.maxPayloadLEO
         : selectedLV.maxPayloadDeepSpace
       : 0;
+
     const massMargin = maxCapacity - mass;
     const budgetMargin = selectedObjective.maxBudget - cost;
+
     const isLaunchViable =
-      selectedLV !== null &&
-      massMargin >= 0 &&
-      budgetMargin >= 0 &&
+      Boolean(selectedLV) &&
+      mass <= maxCapacity &&
+      cost <= selectedObjective.maxBudget &&
       netPower >= 0 &&
-      scienceScore >= selectedObjective.minScience;
+      selectedInstruments.length > 0;
 
     return {
       mass,
@@ -168,53 +205,76 @@ export default function SoloMissionPlanning() {
       minScience: selectedObjective.minScience,
       isLaunchViable,
     };
-  }, [selectedObjective, selectedBus, selectedInstruments, selectedLV]);
+  }, [selectedBus, selectedInstruments, selectedLV, selectedObjective, selectedOrbit]);
 
-  // Persistent progress bar driven by chosen hardpoint specs (persists when popups close, resets when deselected)
-  const hudStage = useMemo(() => {
-    if (viewMode === 'objective') return 1;
-    const count = configuredSlots.size;
-    if (count === 0) return 1;
-    if (count === 1) return 2;
-    if (count <= 3) return 3;
-    if (count === 4) return 4;
-    return 5; // All 5 hardpoints configured
-  }, [viewMode, configuredSlots]);
+  // Equipped labels for 3D hardpoint pills
+  const equippedLabels: Record<SpacecraftPartSlot, string> = useMemo(() => {
+    const getBusLabel = (cat: 'power' | 'comm' | 'adcs') => {
+      const id = selectedBus.find(
+        (bId) => BUS_COMPONENTS.find((c) => c.id === bId)?.category === cat
+      );
+      return BUS_COMPONENTS.find((c) => c.id === id)?.name || 'UNASSIGNED';
+    };
 
-  // Clicking an equipped bus item again deselects it (updates progress bar down)
-  const toggleBusComponent = (id: string, category: 'power' | 'comm' | 'adcs') => {
-    sound.playClick();
-    setSelectedBus((prev) => {
-      const alreadyEquipped = prev.includes(id);
-      const withoutCategory = prev.filter((item) => {
-        const c = BUS_COMPONENTS.find((comp) => comp.id === item);
-        return c?.category !== category;
-      });
-      return alreadyEquipped ? withoutCategory : [...withoutCategory, id];
+    const instNames = selectedInstruments
+      .map((id) => INSTRUMENTS.find((i) => i.id === id)?.name)
+      .filter(Boolean);
+
+    return {
+      power: getBusLabel('power'),
+      comm: getBusLabel('comm'),
+      adcs: getBusLabel('adcs'),
+      payload: instNames.length > 0 ? instNames.join(', ') : 'NO PAYLOAD',
+      launcher: selectedLV ? selectedLV.name : 'NO BOOSTER',
+    };
+  }, [selectedBus, selectedInstruments, selectedLV]);
+
+  const configuredSlots = useMemo(() => {
+    const set = new Set<SpacecraftPartSlot>();
+    selectedBus.forEach((bId) => {
+      const cat = BUS_COMPONENTS.find((c) => c.id === bId)?.category;
+      if (cat) set.add(cat);
     });
-  };
+    if (selectedInstruments.length > 0) set.add('payload');
+    if (selectedLV) set.add('launcher');
+    return set;
+  }, [selectedBus, selectedInstruments, selectedLV]);
 
-  const toggleInstrument = (id: string) => {
+  const [isAssessing, setIsAssessing] = useState(false);
+
+  // Run Pre-Launch Flight Readiness Assessment
+  const handleRunAssessment = () => {
+    if (isAssessing) return;
     sound.playClick();
-    setSelectedInstruments((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
-    );
+    setIsAssessing(true);
+    setAssessmentResult(null);
+
+    setTimeout(() => {
+      const result = evaluateMission(
+        {
+          selectedBus,
+          selectedInstruments,
+          selectedLV,
+        },
+        selectedObjective
+      );
+      setAssessmentResult(result);
+      setIsAssessing(false);
+      sound.playBlip();
+    }, 3000);
   };
 
-  // Clicking the selected launch vehicle again deselects it
-  const toggleLaunchVehicle = (lv: LaunchVehicle) => {
-    sound.playClick();
-    setSelectedLV((prev) => (prev?.id === lv.id ? null : lv));
-  };
-
+  // Launch into 3D Simulation
   const handleLaunch = () => {
-    if (!selectedLV || !assessmentResult?.passed) return;
+    if (!assessmentResult?.passed || !selectedLV) return;
     sound.playClick();
+
     if (typeof window !== 'undefined') {
       sessionStorage.setItem(
         'missionConfig',
         JSON.stringify({
           objective: selectedObjective,
+          orbitRegime: selectedOrbit,
           bus: selectedBus,
           instruments: selectedInstruments,
           launchVehicle: selectedLV,
@@ -223,267 +283,238 @@ export default function SoloMissionPlanning() {
         })
       );
     }
+
     router.push('/simulation');
   };
 
-  const equippedLabels: Record<SpacecraftPartSlot, string> = useMemo(() => {
-    const getBusName = (cat: 'power' | 'comm' | 'adcs') =>
-      BUS_COMPONENTS.find((c) => c.category === cat && selectedBus.includes(c.id))?.name ||
-      'UNASSIGNED';
-
-    return {
-      power: getBusName('power'),
-      comm: getBusName('comm'),
-      adcs: getBusName('adcs'),
-      payload:
-        selectedInstruments.length > 0
-          ? `${selectedInstruments.length} SENSOR(S)`
-          : 'UNASSIGNED',
-      launcher: selectedLV ? selectedLV.name : 'UNASSIGNED',
-    };
-  }, [selectedBus, selectedInstruments, selectedLV]);
-
   return (
-    <div className="crt-container relative min-h-screen flex flex-col p-4 sm:p-8 select-none overflow-x-hidden">
+    <div className="crt-container relative min-h-screen flex flex-col p-4 sm:p-6 select-none overflow-x-hidden font-mono text-[#33ff33]">
       <Starfield />
 
-<div className="relative z-10 w-full max-w-7xl mx-auto flex flex-col gap-4">
-        {viewMode === 'objective' ? (
-          <header className="border-2 border-[#1a881a] bg-[#030803]/95 p-4 sm:p-5 shadow-[0_0_20px_rgba(26,136,26,0.2)] font-mono">
-            <div className="flex flex-wrap justify-between items-center gap-2 border-b border-[#144414] pb-2 mb-2.5 text-xs tracking-widest">
-              <span className="text-amber-400 font-bold">
-                PHASE 01 // MISSION DIRECTIVE SELECTION
+      <div className="relative z-10 w-full max-w-7xl mx-auto flex flex-col gap-4">
+        {/* Top Terminal Navigation Bar */}
+        <header className="border-2 border-[#1a881a] bg-[#030803]/95 px-4 py-3 flex flex-wrap justify-between items-center gap-3">
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-bold tracking-widest text-amber-400">
+              {viewMode === 'objective'
+                ? 'PHASE 01 // MISSION PATH SELECTION'
+                : 'PHASE 03 // VEHICLE ASSEMBLY BUILDING (VAB)'}
+            </span>
+            {viewMode === 'assembly' && (
+              <span className="text-[11px] text-[#28d828] border border-[#144414] px-2 py-0.5 bg-[#041004]">
+                PATH: {selectedObjective.name.toUpperCase()}
+                {selectedOrbit ? ` // ORBIT: ${selectedOrbit.name}` : ''}
               </span>
-              <span className="text-[#1a881a]">[STEP 1 OF 2: CHOOSE TARGET ORBIT]</span>
-            </div>
-            <p className="text-xs sm:text-sm text-[#33ff33] leading-relaxed">
-              CHOOSE YOUR SCIENTIFIC MANDATE BELOW. EACH MISSION DEFINES YOUR TARGET ORBIT, MAXIMUM
-              FUNDING CAP, AND MINIMUM SCIENCE YIELD. ONCE SELECTED, CLICK{' '}
-              <span className="text-amber-400 font-bold">
-                PROCEED TO SPACECRAFT INTEGRATION ►
-              </span>{' '}
-              TO ENTER THE VEHICLE ASSEMBLY BUILDING (VAB) AND ENGINEER YOUR SPACECRAFT.
-            </p>
-          </header>
-        ) : (
-          <div data-tour-target="telemetry-hud" className="w-full">
-            <TelemetryHud
-              currentStage={hudStage}
-              selectedObjective={selectedObjective}
-              telemetry={telemetry}
-            />
-          </div>
-        )}
-
-        <main className="border-2 border-[#1a881a] bg-[#030803]/95 p-6 shadow-[0_0_25px_rgba(26,136,26,0.2)] min-h-120 flex flex-col justify-between">
-          {/* STAGE 1: SELECT PRIMARY SCIENTIFIC OBJECTIVE */}
-          {viewMode === 'objective' && (
-            <StageObjective
-              selected={selectedObjective}
-              onSelect={(obj) => {
-                sound.playClick();
-                setSelectedObjective(obj);
-              }}
-            />
-          )}
-
-          {viewMode === 'assembly' && (
-            <div className="flex flex-wrap justify-between items-center gap-2 pb-3 mb-4 border-b border-[#144414]">
-              <div className="text-xs font-mono tracking-widest text-[#1a881a]">
-                STAGE 02 // VEHICLE ASSEMBLY BUILDING (VAB) —{' '}
-                <span className="text-[#33ff33] font-bold">{selectedObjective.name.toUpperCase()}</span>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  sound.playClick();
-                  setIsHelpOpen(true);
-                }}
-                className="px-3 py-1 border border-amber-400 bg-[#040d04] text-amber-400 hover:border-[#33ff33] hover:text-[#33ff33] text-xs font-mono font-bold tracking-wider cursor-pointer shadow-[0_0_10px_rgba(255,176,0,0.25)]"
-              >
-                [?] VAB SYSTEMS GUIDE
-              </button>
-            </div>
-          )}
-
-          {/* ASSEMBLY VIEW: COMPACT HARDPOINT PINS ON SPACECRAFT + SIDE PART OPTIONS */}
-          <div className={viewMode === 'assembly' ? 'flex flex-col lg:flex-row gap-6 items-stretch' : 'hidden'}>
-            <div className="flex-1 min-w-0">
-              <InteractiveSpacecraftStage
-                activeSlot={activeSlot}
-                onSelectSlot={setActiveSlot}
-                equippedLabels={equippedLabels}
-                configuredSlots={configuredSlots}
-              />
-            </div>
-
-          <div data-tour-target="part-inspector" className="flex">
-            <PartSideInspector
-              activeSlot={activeSlot}
-              selectedObjective={selectedObjective}
-              selectedBus={selectedBus}
-              selectedInstruments={selectedInstruments}
-              selectedLV={selectedLV}
-              onToggleBus={toggleBusComponent}
-              onToggleInstrument={toggleInstrument}
-              onSelectLV={toggleLaunchVehicle}
-            />
-            </div>
+            )}
           </div>
 
-          {/* FLIGHT READINESS ASSESSMENT CONSOLE */}
-          {viewMode === 'assembly' && (isAssessing || assessmentResult) && (
-            <div
-              className={`mt-6 p-4 border-2 font-mono text-xs ${
-                isAssessing
-                  ? 'border-amber-400 bg-amber-950/20 text-amber-300'
-                  : assessmentResult?.passed
-                  ? 'border-[#33ff33] bg-[#041204] text-[#33ff33] shadow-[0_0_20px_rgba(51,255,51,0.25)]'
-                  : 'border-red-500 bg-red-950/25 text-red-400 shadow-[0_0_20px_rgba(239,68,68,0.25)]'
-              }`}
-            >
-              {isAssessing ? (
-                  <div className="flex items-center gap-3 py-2">
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="square"
-                      strokeLinejoin="miter"
-                      className="w-5 h-5 text-amber-400 animate-spin shrink-0"
-                    >
-                      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
-                    </svg>
-                    <span className="tracking-widest font-bold animate-pulse">
-                      RUNNING NASA FLIGHT READINESS DIAGNOSTICS // VERIFYING GATES, EOL POWER &amp; ODMSP...
-                    </span>
-                  </div>
-                ) : (
-                assessmentResult && (
-                  <div className="space-y-3">
-                    <div className="flex flex-wrap justify-between items-center gap-2 border-b border-current/30 pb-2">
-                      <div className="flex items-center gap-3">
-                        <span className="font-bold text-sm tracking-widest">
-                          STATUS: {assessmentResult.status}
-                        </span>
-                        {assessmentResult.passed && (
-                          <span className="px-2 py-0.5 border border-[#33ff33] bg-[#33ff33]/20 font-bold">
-                            SCORE: {assessmentResult.score} PTS // RANK [{assessmentResult.rank}]
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-[10px] opacity-80">
-                        AVG TRL: {assessmentResult.metrics.avgTrl.toFixed(1)} | EOL PWR:{' '}
-                        {Math.round(assessmentResult.metrics.eolPower)}W | ΔV REM: +
-                        {assessmentResult.metrics.remainingDeltaV} M/S
-                      </span>
-                    </div>
-
-                    <ul className="space-y-1 text-[11px] leading-relaxed">
-                      {assessmentResult.feedbackLog.map((entry, idx) => (
-                        <li key={idx}>► {entry}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )
-              )}
-            </div>
-          )}
-
-          <footer className="mt-8 pt-4 border-t border-[#144414] flex flex-wrap justify-between items-center gap-3">
-            <div>
-              {viewMode === 'assembly' ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    sound.playBlip();
-                    setActiveSlot(null);
-                    setViewMode('objective');
-                  }}
-                  className="px-4 py-2 border border-[#144414] text-[#1a881a] hover:border-[#1a881a] hover:text-[#33ff33] text-xs font-bold tracking-wider cursor-pointer"
-                >
-                  ◄ CHANGE SCIENTIFIC OBJECTIVE
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => router.push('/')}
-                  className="px-4 py-2 border border-[#144414] text-[#1a881a] hover:border-[#1a881a] hover:text-[#33ff33] text-xs font-bold tracking-wider cursor-pointer"
-                >
-                  ◄ ABORT TO MAIN MENU
-                </button>
-              )}
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3">
-              {viewMode === 'objective' ? (
+          <div className="flex items-center gap-2">
+            {viewMode === 'assembly' && (
+              <>
                 <button
                   type="button"
                   onClick={() => {
                     sound.playClick();
-                    setViewMode('assembly');
-                    if (typeof window !== 'undefined' && !sessionStorage.getItem('vabTourSeen')) {
-                      setIsHelpOpen(true);
-                      sessionStorage.setItem('vabTourSeen', 'true');
-                    }
+                    setShowHelpModal(true);
                   }}
-                  className="px-6 py-2.5 border border-[#33ff33] bg-[#33ff33]/15 text-[#33ff33] hover:bg-[#33ff33]/25 shadow-[0_0_15px_rgba(51,255,51,0.25)] text-xs font-bold tracking-wider cursor-pointer"
+                  className="px-3 py-1 border border-amber-500/70 text-amber-400 hover:bg-amber-500/15 text-xs font-bold tracking-wider cursor-pointer"
                 >
-                  PROCEED TO SPACECRAFT INTEGRATION ►
+                  [?] VAB GUIDE
                 </button>
-              ) : (
-                <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    sound.playClick();
+                    router.push('/orbits');
+                  }}
+                  className="px-3 py-1 border border-[#1a881a] text-[#33ff33] hover:bg-[#33ff33]/15 text-xs font-bold tracking-wider cursor-pointer"
+                >
+                  ◄ CHANGE ORBIT
+                </button>
+              </>
+            )}
+
+            <button
+              type="button"
+              onClick={() => {
+                sound.playClick();
+                if (viewMode === 'assembly') {
+                  sessionStorage.removeItem('selectedOrbitRegime');
+                  setViewMode('objective');
+                } else {
+                  router.push('/briefing');
+                }
+              }}
+              className="px-3 py-1 border border-[#144414] text-[#1a881a] hover:border-[#1a881a] hover:text-[#33ff33] text-xs font-bold tracking-wider cursor-pointer"
+            >
+              {viewMode === 'assembly' ? '◄ CHANGE PATH' : '◄ BRIEFING'}
+            </button>
+          </div>
+        </header>
+
+        {/* VIEW 1: MISSION PATH SELECTION */}
+        {viewMode === 'objective' ? (
+          <div className="my-auto py-4">
+            <StageObjective
+              selected={selectedObjective}
+              onSelect={handleSelectObjective}
+            />
+          </div>
+        ) : (
+          /* VIEW 2: 3D VAB SPACECRAFT ASSEMBLY */
+          <>
+            {/* Target 01: Telemetry HUD */}
+            <div data-tour-target="telemetry-hud">
+              <TelemetryHud
+                telemetry={telemetry}
+                currentStage={2}
+                selectedObjective={selectedObjective}
+              />
+            </div>
+
+            {/* Main Assembly Workspace: 3D Spacecraft Stage + Stretching Side Inspector */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+              {/* Left 3D Spacecraft Stage */}
+              <div className="lg:col-span-7 flex flex-col">
+                <InteractiveSpacecraftStage
+                  activeSlot={activeSlot}
+                  onSelectSlot={setActiveSlot}
+                  equippedLabels={equippedLabels}
+                  configuredSlots={configuredSlots}
+                />
+              </div>
+
+              {/* Right Side Subsystem Inspector (Flexes to fill vertical space) */}
+              <div
+                data-tour-target="part-inspector"
+                className="lg:col-span-5 flex flex-col"
+              >
+                <div className="flex-1 flex flex-col *:flex-1">
+                  <PartSideInspector
+                    activeSlot={activeSlot}
+                    selectedBus={selectedBus}
+                    selectedInstruments={selectedInstruments}
+                    selectedLV={selectedLV}
+                    selectedObjective={selectedObjective}
+                    onToggleBus={handleToggleBus}
+                    onToggleInstrument={handleToggleInstrument}
+                    onSelectLV={handleSelectLV}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Full-Width Flight Readiness & Launch Control Console */}
+            <div className="border-2 border-[#1a881a] bg-[#030903]/95 p-4 flex flex-col gap-3">
+              <div className="flex flex-wrap justify-between items-center gap-2 border-b border-[#144414] pb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold tracking-widest text-amber-400">
+                    FLIGHT READINESS ASSESSMENT
+                  </span>
+                  {isAssessing && (
+                    <svg
+                      className="w-3.5 h-3.5 text-amber-400 animate-spin"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+                    </svg>
+                  )}
+                </div>
+
+                {isAssessing ? (
+                  <span className="text-xs font-bold px-2 py-0.5 border border-amber-400/70 text-amber-300 bg-amber-500/10">
+                    RUNNING DIAGNOSTICS...
+                  </span>
+                ) : (
+                  assessmentResult && (
+                    <span
+                      className={`text-xs font-bold px-2 py-0.5 border ${
+                        assessmentResult.passed
+                          ? 'border-[#33ff33] text-[#33ff33] bg-[#33ff33]/10'
+                          : 'border-red-500 text-red-400 bg-red-950/30'
+                      }`}
+                    >
+                      {assessmentResult.status} // RANK {assessmentResult.rank} (
+                      {assessmentResult.score} PTS)
+                    </span>
+                  )
+                )}
+              </div>
+
+              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                <div className="flex-1 w-full">
+                  {assessmentResult ? (
+                    <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1 text-[11px]">
+                      {assessmentResult.feedbackLog.map((line, i) => (
+                        <div
+                          key={i}
+                          className={
+                            line.includes('FAILED') || line.includes('VIOLATION')
+                              ? 'text-red-400'
+                              : line.includes('WARNING') || line.includes('RISK PROFILE')
+                              ? 'text-amber-400'
+                              : 'text-[#28d828]'
+                          }
+                        >
+                          &gt; {line}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-[#1a881a]">
+                      CONFIGURE ALL 5 HARDPOINTS AND RUN PRE-LAUNCH VERIFICATION TO CHECK
+                      MASS, POWER, POINTING, AND COOLING REQUIREMENTS.
+                    </p>
+                  )}
+                </div>
+
+                {/* Target 05: Launch Controls */}
+                <div
+                  data-tour-target="launch-button"
+                  className="flex flex-wrap sm:flex-nowrap gap-2 w-full lg:w-auto shrink-0"
+                >
                   <button
                     type="button"
-                    data-tour-target="launch-button"
-                    disabled={isAssessing}
                     onClick={handleRunAssessment}
-                    className={`px-5 py-2.5 border text-xs font-bold tracking-wider transition-all flex items-center gap-2 ${
-                      isAssessing
-                        ? 'border-amber-500 bg-amber-950/30 text-amber-400 cursor-wait'
-                        : 'border-amber-400 bg-amber-400/15 text-amber-300 hover:bg-amber-400/25 shadow-[0_0_15px_rgba(251,191,36,0.25)] cursor-pointer'
-                    }`}
+                    className="flex-1 lg:flex-initial py-2.5 px-4 border border-amber-400 bg-amber-500/15 text-amber-300 hover:bg-amber-500/25 text-xs font-bold tracking-wider cursor-pointer"
                   >
-                    {isAssessing ? (
-                      <>
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="square"
-                          strokeLinejoin="miter"
-                          className="w-4 h-4 text-amber-400 animate-spin shrink-0"
-                        >
-                          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
-                        </svg>
-                        ASSESSING MISSION...
-                      </>
-                    ) : (
-                      'RUN FLIGHT READINESS ASSESSMENT'
-                    )}
+                    RUN READINESS CHECK
                   </button>
 
-                  {assessmentResult?.passed && (
-                    <button
-                      type="button"
-                      onClick={handleLaunch}
-                      className="px-6 py-2.5 border-2 border-[#33ff33] bg-[#33ff33]/25 text-[#33ff33] hover:bg-[#33ff33]/40 shadow-[0_0_20px_rgba(51,255,51,0.45)] animate-pulse text-xs font-bold tracking-wider cursor-pointer"
-                    >
-                      EXECUTE LAUNCH (RANK {assessmentResult.rank}) ►
-                    </button>
-                  )}
-                </>
-              )}
+                  <button
+                    type="button"
+                    disabled={!assessmentResult?.passed}
+                    onClick={handleLaunch}
+                    className={`flex-1 lg:flex-initial py-2.5 px-5 border text-xs font-bold tracking-wider transition-all ${
+                      assessmentResult?.passed
+                        ? 'border-[#33ff33] bg-[#33ff33]/25 text-[#33ff33] hover:bg-[#33ff33]/40 cursor-pointer shadow-[0_0_15px_rgba(51,255,51,0.35)]'
+                        : 'border-[#144414] text-[#144414] cursor-not-allowed'
+                    }`}
+                  >
+                    INITIATE LAUNCH ►
+                  </button>
+                </div>
+              </div>
             </div>
-          </footer>
-
-
-        </main>
+          </>
+        )}
       </div>
-      <MissionHelpModal isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} onSelectSlot={setActiveSlot} />
+
+      <MissionHelpModal
+        isOpen={showHelpModal}
+        onClose={() => {
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('vabTourSeen', 'true');
+          }
+          setShowHelpModal(false);
+        }}
+        onSelectSlot={setActiveSlot}
+      />
     </div>
   );
 }

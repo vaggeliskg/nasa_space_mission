@@ -56,7 +56,7 @@ export default function PartSideInspector({
 }: PartSideInspectorProps) {
   if (!activeSlot) {
     return (
-      <aside className="w-full lg:w-97.5 shrink-0 border-2 border-[#144414] bg-[#030803]/95 p-5 flex flex-col justify-center items-center text-center gap-3">
+      <aside className="w-full h-full border-2 border-[#144414] bg-[#030803]/95 p-5 flex flex-col justify-center items-center text-center gap-3">
         <div className="text-xs font-bold tracking-widest text-amber-400">
           [AWAITING HARDPOINT SELECTION]
         </div>
@@ -74,17 +74,18 @@ export default function PartSideInspector({
       : [];
 
   return (
-    <aside className="w-full lg:w-97.5 shrink-0 border-2 border-[#1a881a] bg-[#030803]/95 p-4 flex flex-col gap-3 max-h-125 overflow-y-auto">
-      <div className="border-b border-[#144414] pb-2">
+    <aside className="w-full h-full border-2 border-[#1a881a] bg-[#030803]/95 p-4 flex flex-col gap-3">
+      <div className="border-b border-[#144414] pb-2 shrink-0">
         <div className="text-[10px] tracking-widest text-amber-400">{header.code}</div>
         <div className="text-sm font-bold text-[#33ff33] mt-0.5">{header.title}</div>
         <p className="text-[10px] text-[#1a881a] mt-1 leading-snug">{header.hint}</p>
       </div>
 
-      {/* BUS SUBSYSTEMS (POWER, COMM, ADCS) */}
-      {(activeSlot === 'power' || activeSlot === 'comm' || activeSlot === 'adcs') && (
-        <div className="flex flex-col gap-2.5">
-          {busItems.map((item) => {
+      {/* Scrollable Option List */}
+      <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-2.5">
+        {/* BUS SUBSYSTEMS (POWER, COMM, ADCS) */}
+        {(activeSlot === 'power' || activeSlot === 'comm' || activeSlot === 'adcs') &&
+          busItems.map((item) => {
             const isSelected = selectedBus.includes(item.id);
             return (
               <button
@@ -103,7 +104,7 @@ export default function PartSideInspector({
                     <span className="text-[9px] text-amber-400 font-bold shrink-0">[EQUIPPED]</span>
                   )}
                 </div>
-                <p className="text-[10px] text-[#22bb22] mt-1 leading-snug">{item.desc}</p>
+                <p className="text-[10px] text-[#22bb22] mt-1 leading-snug">{item.description}</p>
                 <div className="mt-2 text-[10px] font-bold text-amber-400">
                   {item.powerDelta > 0 ? `+${item.powerDelta}W` : `${item.powerDelta}W`} | {item.mass}kg | ${item.cost}M
                   {item.dataDownlink ? ` | ${item.dataDownlink} kbps` : ''}
@@ -111,13 +112,10 @@ export default function PartSideInspector({
               </button>
             );
           })}
-        </div>
-      )}
 
-      {/* PAYLOAD INSTRUMENTS (MULTI-SELECT) */}
-      {activeSlot === 'payload' && (
-        <div className="flex flex-col gap-2.5">
-          {INSTRUMENTS.map((inst) => {
+        {/* PAYLOAD INSTRUMENTS (MULTI-SELECT) */}
+        {activeSlot === 'payload' &&
+          INSTRUMENTS.map((inst) => {
             const isSelected = selectedInstruments.includes(inst.id);
             return (
               <button
@@ -136,23 +134,20 @@ export default function PartSideInspector({
                     {isSelected ? '[MOUNTED]' : '[+ MOUNT]'}
                   </span>
                 </div>
-                <p className="text-[10px] text-[#22bb22] mt-1 leading-snug">{inst.desc}</p>
+                <p className="text-[10px] text-[#22bb22] mt-1 leading-snug">{inst.description}</p>
                 <div className="mt-2 text-[10px] font-bold text-amber-400">
                   +{inst.science} PTS | -{inst.power}W | {inst.mass}kg | ${inst.cost}M
                 </div>
               </button>
             );
           })}
-        </div>
-      )}
 
-      {/* LAUNCH VEHICLE OPTIONS */}
-      {activeSlot === 'launcher' && (
-        <div className="flex flex-col gap-2.5">
-          {LAUNCH_VEHICLES.map((lv) => {
+        {/* LAUNCH VEHICLE OPTIONS */}
+        {activeSlot === 'launcher' &&
+          LAUNCH_VEHICLES.map((lv) => {
             const isSelected = lv.id === selectedLV?.id;
             const cap =
-              selectedObjective.id === 'earth_obs'
+              selectedObjective.orbitType === 'LEO'
                 ? lv.maxPayloadLEO
                 : lv.maxPayloadDeepSpace;
             return (
@@ -175,15 +170,14 @@ export default function PartSideInspector({
                     <span className="text-[9px] text-amber-400 font-bold shrink-0">[SELECTED]</span>
                   )}
                 </div>
-                <p className="text-[10px] text-[#22bb22] mt-1 leading-snug">{lv.desc}</p>
+                <p className="text-[10px] text-[#22bb22] mt-1 leading-snug">{lv.description}</p>
                 <div className="mt-2 text-[10px] font-bold text-amber-400">
-                  MAX PAYLOAD: {cap}kg | COST: ${lv.cost}M | REL: {lv.reliability}
+                  MAX PAYLOAD: {cap}kg | COST: ${lv.cost}M | REL: {lv.trl ?? 9.0}
                 </div>
               </button>
             );
           })}
-        </div>
-      )}
+      </div>
     </aside>
   );
 }

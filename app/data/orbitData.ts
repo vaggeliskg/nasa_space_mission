@@ -25,7 +25,7 @@ export const ORBIT_REGIMES: OrbitRegime[] = [
     periodLabel: '92.6 MIN',
     deltaVReq: 9400,
     mappedObjectiveId: 'earth_obs',
-    visualRadius: 2.35,
+    visualRadius: 1.81,
     inclinationDeg: 51.6,
     color: '#33ff33',
     summary:
@@ -42,7 +42,7 @@ export const ORBIT_REGIMES: OrbitRegime[] = [
     periodLabel: '23H 56M 04S',
     deltaVReq: 11800,
     mappedObjectiveId: 'earth_obs',
-    visualRadius: 3.65,
+    visualRadius: 11.25,
     inclinationDeg: 0,
     color: '#ffb000',
     summary:
@@ -59,7 +59,7 @@ export const ORBIT_REGIMES: OrbitRegime[] = [
     periodLabel: 'HALO ORBIT (~180 DAYS)',
     deltaVReq: 12800,
     mappedObjectiveId: 'lunar_recon',
-    visualRadius: 5.1,
+    visualRadius: 13.5,
     inclinationDeg: 12,
     color: '#38bdf8',
     summary:

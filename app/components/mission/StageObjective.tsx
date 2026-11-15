@@ -33,7 +33,7 @@ export default function StageObjective({ selected, onSelect }: Props) {
                   {isSelected && <span>[ACTIVE]</span>}
                 </div>
                 <div className="text-[10px] text-[#1a881a] mb-2">{obj.target}</div>
-                <p className="text-xs text-[#20aa20] mb-3 leading-relaxed">{obj.desc}</p>
+                <p className="text-xs text-[#20aa20] mb-3 leading-relaxed">{obj.description}</p>
               </div>
               <div className="border-t border-[#144414] pt-2 text-[11px] space-y-1 text-[#1a881a]">
                 <div className="flex justify-between">
@@ -46,7 +46,7 @@ export default function StageObjective({ selected, onSelect }: Props) {
                 </div>
                 <div className="flex justify-between">
                   <span>LIFETIME:</span>
-                  <span className="text-[#33ff33]">{obj.nominalLifeYears} YEARS</span>
+                  <span className="text-[#33ff33]">{obj.lifespanYears} YEARS</span>
                 </div>
               </div>
             </div>
