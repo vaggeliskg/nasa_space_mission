@@ -1,7 +1,7 @@
 'use client';
 
 import '@react-three/fiber';
-import { useRef, useState, useMemo, Suspense } from 'react';
+import React, { useRef, useState, useMemo, Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Html, Line, useGLTF, Environment } from '@react-three/drei';
 import * as THREE from 'three';
@@ -12,6 +12,7 @@ interface EarthViewerProps {
   selectedSite: LaunchSite | null;
   onSelectSite: (site: LaunchSite | null) => void;
   onLaunchComplete?: (site: LaunchSite) => void;
+  onResetLaunch?: () => void;
 }
 
 const EARTH_RADIUS = 2.2;
@@ -72,7 +73,6 @@ function buildLaunchTrajectory(site: LaunchSite) {
   const insertionAngle = 0.55;
   for (let i = 0; i <= ascentSteps; i++) {
     const t = i / ascentSteps;
-    // Smooth ease-out altitude climb + pitch-over downrange
     const altEase = 1 - Math.pow(1 - t, 2.2);
     const angleEase = t * t * insertionAngle;
     const r = THREE.MathUtils.lerp(EARTH_RADIUS + 0.02, ORBIT_RADIUS, altEase);
@@ -92,7 +92,13 @@ function buildLaunchTrajectory(site: LaunchSite) {
   };
 }
 
-function ActiveTrajectory({ site }: { site: LaunchSite }) {
+function ActiveTrajectory({
+  site,
+  portal,
+}: {
+  site: LaunchSite;
+  portal: React.RefObject<HTMLDivElement>;
+}) {
   const craftRef = useRef<THREE.Group>(null);
   const trailRef = useRef<THREE.Mesh>(null);
   const elapsedRef = useRef(0);
@@ -100,7 +106,6 @@ function ActiveTrajectory({ site }: { site: LaunchSite }) {
   const { scene: shipScene } = useGLTF('/models/spaceship.glb');
   const trajectory = useMemo(() => buildLaunchTrajectory(site), [site]);
 
-  // Auto-normalize spaceship.glb to a compact orbital scale centered at origin
   const normalizedShip = useMemo(() => {
     const cloned = shipScene.clone();
     cloned.traverse((child) => {
@@ -133,7 +138,7 @@ function ActiveTrajectory({ site }: { site: LaunchSite }) {
 
   useFrame((_, delta) => {
     elapsedRef.current += delta;
-    const ascentDuration = 3.2; // Seconds to climb from pad into orbital insertion
+    const ascentDuration = 3.2;
     const tTotal = elapsedRef.current;
 
     if (!craftRef.current) return;
@@ -142,7 +147,6 @@ function ActiveTrajectory({ site }: { site: LaunchSite }) {
     let nextPos: THREE.Vector3;
 
     if (tTotal < ascentDuration) {
-      // Phase 1: Powered Ascent along gravity-turn curve
       const t = tTotal / ascentDuration;
       const altEase = 1 - Math.pow(1 - t, 2.2);
       const angleEase = t * t * trajectory.insertionAngle;
@@ -161,9 +165,8 @@ function ActiveTrajectory({ site }: { site: LaunchSite }) {
         .addScaledVector(trajectory.upDir, Math.cos(angNext) * rNext)
         .addScaledVector(trajectory.azimuthDir, Math.sin(angNext) * rNext);
     } else {
-      // Phase 2: Continuous Orbital Flight around Earth
       const orbitTime = tTotal - ascentDuration;
-      const orbitalSpeed = 0.42; // rad/sec
+      const orbitalSpeed = 0.42;
       const angle = trajectory.insertionAngle + orbitTime * orbitalSpeed;
 
       currentPos = new THREE.Vector3()
@@ -180,7 +183,6 @@ function ActiveTrajectory({ site }: { site: LaunchSite }) {
     craftRef.current.lookAt(nextPos);
 
     if (trailRef.current) {
-      // Pulse thruster plume during ascent, subtle ion glow once in orbit
       const isAscending = tTotal < ascentDuration;
       const scale = isAscending ? 1 + Math.sin(tTotal * 25) * 0.25 : 0.45;
       trailRef.current.scale.set(scale, scale, isAscending ? 1.6 : 0.7);
@@ -189,7 +191,6 @@ function ActiveTrajectory({ site }: { site: LaunchSite }) {
 
   return (
     <group>
-      {/* Planned Circular Orbital Track */}
       <Line
         points={trajectory.orbitPoints}
         color="#1a881a"
@@ -199,25 +200,17 @@ function ActiveTrajectory({ site }: { site: LaunchSite }) {
         gapSize={0.09}
       />
 
-      {/* Powered Ascent Arc */}
-      <Line
-        points={trajectory.ascentPoints}
-        color="#ffb000"
-        lineWidth={2}
-      />
+      <Line points={trajectory.ascentPoints} color="#ffb000" lineWidth={2} />
 
-      {/* Live Orbiting Spacecraft (spaceship.glb) + Thruster Plume */}
       <group ref={craftRef}>
         <primitive object={normalizedShip} />
 
-        {/* Thruster Plume */}
         <mesh ref={trailRef} position={[0, 0, -0.18]} rotation={[-Math.PI / 2, 0, 0]}>
           <coneGeometry args={[0.04, 0.22, 8]} />
           <meshBasicMaterial color="#ffb000" transparent opacity={0.85} />
         </mesh>
 
-        {/* Live Telemetry Callout */}
-        <Html distanceFactor={8} zIndexRange={[100, 0]}>
+        <Html key={`traj-${site.id}`} portal={portal} distanceFactor={8} zIndexRange={[100, 0]}>
           <div className="px-2 py-0.5 bg-[#020802]/90 border border-[#33ff33] text-[#33ff33] text-[8px] font-mono font-bold tracking-wider whitespace-nowrap pointer-events-none shadow-[0_0_10px_rgba(51,255,51,0.4)]">
             ▲ {site.code} // ORBITAL INSERTION ACTIVE
           </div>
@@ -232,11 +225,13 @@ function EarthScene({
   onSelectSite,
   launchedSite,
   onLaunchFromSite,
+  portal,
 }: {
   selectedSite: LaunchSite | null;
   onSelectSite: (site: LaunchSite | null) => void;
   launchedSite: LaunchSite | null;
   onLaunchFromSite: (site: LaunchSite) => void;
+  portal: React.RefObject<HTMLDivElement>;
 }) {
   const earthGroupRef = useRef<THREE.Group>(null);
   const { scene } = useGLTF('/models/Earth.glb');
@@ -274,7 +269,6 @@ function EarthScene({
   }, [scene]);
 
   useFrame((_, delta) => {
-    // Rotate Earth slowly unless inspecting a pad; once launched, rotate slowly underneath the orbital plane
     if (earthGroupRef.current && (!selectedSite || launchedSite)) {
       earthGroupRef.current.rotation.y += delta * 0.05;
     }
@@ -289,9 +283,8 @@ function EarthScene({
         }}
       />
 
-      {/* Once launched, hide all launch site pins and display the trajectory animation */}
       {launchedSite ? (
-        <ActiveTrajectory site={launchedSite} />
+        <ActiveTrajectory site={launchedSite} portal={portal} />
       ) : (
         EARTH_LAUNCH_SITES.map((site) => {
           const pos = latLonToVector3(site.lat, site.lon, EARTH_RADIUS + 0.03);
@@ -328,7 +321,7 @@ function EarthScene({
                 <meshBasicMaterial color={pinColor} side={THREE.DoubleSide} />
               </mesh>
 
-              <Html distanceFactor={8} zIndexRange={[100, 0]}>
+              <Html key={site.id} portal={portal} distanceFactor={8} zIndexRange={[100, 0]}>
                 {!isSelected ? (
                   <button
                     type="button"
@@ -337,12 +330,12 @@ function EarthScene({
                       sound.playClick();
                       onSelectSite(site);
                     }}
-                    className="px-1.5 py-0.5 bg-[#020802]/90 border border-[#ffb000] text-[#ffb000] hover:border-[#33ff33] hover:text-[#33ff33] text-[8px] font-mono font-bold tracking-wider whitespace-nowrap cursor-pointer"
+                    className="pointer-events-auto px-1.5 py-0.5 bg-[#020802]/90 border border-[#ffb000] text-[#ffb000] hover:border-[#33ff33] hover:text-[#33ff33] text-[8px] font-mono font-bold tracking-wider whitespace-nowrap cursor-pointer"
                   >
                     ▲ {site.code}
                   </button>
                 ) : (
-                  <div className="w-64 p-3 bg-[#020902]/95 border-2 border-[#33ff33] text-[#33ff33] font-mono text-[11px] shadow-[0_0_20px_rgba(51,255,51,0.45)] select-none">
+                  <div className="pointer-events-auto w-64 p-3 bg-[#020902]/95 border-2 border-[#33ff33] text-[#33ff33] font-mono text-[11px] shadow-[0_0_20px_rgba(51,255,51,0.45)] select-none">
                     <div className="flex justify-between items-center border-b border-[#144414] pb-1 mb-1.5">
                       <span className="font-bold text-amber-400">[{site.code}] LAUNCH PAD</span>
                       <button
@@ -403,8 +396,10 @@ export default function EarthViewer({
   selectedSite,
   onSelectSite,
   onLaunchComplete,
+  onResetLaunch,
 }: EarthViewerProps) {
   const [launchedSite, setLaunchedSite] = useState<LaunchSite | null>(null);
+  const portalRef = useRef<HTMLDivElement>(null!);
 
   const handleLaunchFromSite = (site: LaunchSite) => {
     setLaunchedSite(site);
@@ -414,8 +409,19 @@ export default function EarthViewer({
     }
   };
 
+  const handleReset = () => {
+    sound.playBlip();
+    setLaunchedSite(null);
+    if (onResetLaunch) {
+      onResetLaunch();
+    }
+  };
+
   return (
     <div className="relative z-20 w-full h-135 border-2 border-[#1a881a] bg-[#020502] overflow-hidden">
+      {/* Dedicated DOM portal target so Drei <Html> never unmounts synchronously inside R3F */}
+      <div ref={portalRef} className="pointer-events-none" />
+
       <div className="absolute top-3 left-3 right-3 z-10 flex justify-between items-center text-xs tracking-widest text-[#1a881a] pointer-events-none">
         <span>
           {launchedSite
@@ -426,10 +432,7 @@ export default function EarthViewer({
         {launchedSite ? (
           <button
             type="button"
-            onClick={() => {
-              sound.playBlip();
-              setLaunchedSite(null);
-            }}
+            onClick={handleReset}
             className="pointer-events-auto px-2.5 py-1 border border-amber-400 bg-[#020802]/90 text-amber-400 hover:border-[#33ff33] hover:text-[#33ff33] text-[10px] font-bold tracking-wider cursor-pointer"
           >
             [↺ RESET LAUNCH SITES]
@@ -453,6 +456,7 @@ export default function EarthViewer({
             onSelectSite={onSelectSite}
             launchedSite={launchedSite}
             onLaunchFromSite={handleLaunchFromSite}
+            portal={portalRef}
           />
         </Suspense>
 
