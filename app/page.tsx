@@ -21,7 +21,7 @@ export default function WelcomeScreen() {
       id: 'multiplayer',
       title: '[ 2 ] MULTIPLAYER',
       subtext: 'JOIN OR HOST LOBBY (CURRENTLY UNAVAILABLE)',
-      path: '/lobby',
+      path: '/',
     },
   ];
 
