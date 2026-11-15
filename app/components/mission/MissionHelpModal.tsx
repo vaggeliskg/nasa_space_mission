@@ -35,7 +35,7 @@ const TOUR_STEPS: TourStep[] = [
   {
     code: '02 // HP-01 POWER',
     tag: 'VAB // ELECTRICAL',
-    title: 'POWER GENERATION (SOLAR / RTG)',
+    title: 'POWER GENERATION (SOLAR PANELS / BATTERIES)',
     targetSelector: '[data-tour-target="part-inspector"]',
     slotToSelect: 'power',
     summary:
@@ -44,35 +44,35 @@ const TOUR_STEPS: TourStep[] = [
       'If power draw exceeds power generation, sensors brown out and launch is blocked.',
   },
   {
-    code: '03 // HP-02 & HP-03',
-    tag: 'VAB // COMMS & ADCS',
-    title: 'COMMUNICATIONS & ATTITUDE CONTROL',
+    code: '03 // HP-02',
+    tag: 'VAB // COMMS',
+    title: 'COMMUNICATIONS',
     targetSelector: '[data-tour-target="part-inspector"]',
     slotToSelect: 'comm',
     summary:
-      'Communications antennas downlink science data to Earth, while ADCS reaction wheels aim and stabilize the spacecraft.',
+      'Communications antennas downlink science data to Earth.',
     whyItMatters:
       'High-rate instruments need matching downlink bandwidth and stable pointing accuracy.',
   },
   {
     code: '04 // HP-04 PAYLOAD',
     tag: 'VAB // SENSORS',
-    title: 'SCIENTIFIC INSTRUMENTS',
+    title: 'ATTITUDE CONTROL & SCIENTIFIC INSTRUMENTS',
     targetSelector: '[data-tour-target="part-inspector"]',
     slotToSelect: 'adcs',
     summary:
-      'Equip Optical Imagers, SAR, Spectrometers, or Magnetometers to generate Science Points.',
+      'ADCS reaction wheels aim and stabilize the spacecraft. Scientific instruments collect data for the mission objective.',
     whyItMatters:
       'You must meet the mission minimum Science Yield—and orbital targets require matching sensor types.',
   },
   {
-    code: '05 // HP-05 & LAUNCH',
+    code: '05 // HP-03 & LAUNCH',
     tag: 'VAB // PROPULSION',
     title: 'BOOSTER SELECTION & LAUNCH',
     targetSelector: '[data-tour-target="launch-button"]',
     slotToSelect: 'propulsion',
     summary:
-      'Select a launch booster rated for your spacecraft mass in HP-05, then click EXECUTE LAUNCH once all checks turn green.',
+      'Select a launch booster rated for your spacecraft mass in HP-05, then click RUN READINESS CHECK.',
     whyItMatters:
       'Every booster has a strict payload mass ceiling—heavier science rigs require stronger rockets.',
   },

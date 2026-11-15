@@ -128,7 +128,7 @@ export default function CommanderDebrief({
             ref={textScrollRef}
             className="flex-1 min-h-0 overflow-y-auto pr-1.5"
           >
-            <p className="whitespace-pre-wrap break-words">
+            <p className="whitespace-pre-wrap wrap-break-word">
               {displayedText}
               {!isDone && (
                 <span className="inline-block w-2 h-4 bg-[#33ff33] ml-1 align-middle animate-pulse" />
