@@ -8,7 +8,9 @@ import StageObjective from '../components/mission/StageObjective';
 import InteractiveSpacecraftStage, {
   SpacecraftPartSlot,
 } from '../components/mission/InteractiveSpacecraftStage';
-import PartSideInspector from '../components/mission/PartSideInspector';
+import PartSideInspector, {
+  InspectorSubTabKey,
+} from '../components/mission/PartSideInspector';
 import MissionHelpModal from '../components/mission/MissionHelpModal';
 import {
   OBJECTIVES,
@@ -33,6 +35,7 @@ export default function SoloMissionPlanning() {
   const [selectedDifficulty, setSelectedDifficulty] = useState<DifficultyLevel>('medium');
   const [selectedOrbit, setSelectedOrbit] = useState<OrbitRegime | null>(null);
   const [activeSlot, setActiveSlot] = useState<SpacecraftPartSlot | null>(null);
+  const [activeSubTab, setActiveSubTab] = useState<InspectorSubTabKey | null>(null);
 
   const [selectedBus, setSelectedBus] = useState<string[]>([]);
   const [selectedInstruments, setSelectedInstruments] = useState<string[]>([]);
@@ -145,6 +148,7 @@ export default function SoloMissionPlanning() {
     router.push('/orbits');
   };
 
+  // Toggle Bus component (one per subCategory so each sub-tab holds its own equipped item)
   const handleToggleBus = (id: string) => {
     const target = BUS_COMPONENTS.find((b) => b.id === id);
     if (!target) return;
@@ -160,13 +164,13 @@ export default function SoloMissionPlanning() {
     setAssessmentResult(null);
   };
 
+  // Single-select Payload Instrument (only one payload can be equipped at a time; no stacking)
   const handleToggleInstrument = (id: string) => {
-    setSelectedInstruments((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
+    setSelectedInstruments((prev) => (prev.includes(id) ? [] : [id]));
     setAssessmentResult(null);
   };
 
+  // Select Launch Vehicle
   const handleSelectLV = (lv: LaunchVehicle) => {
     setSelectedLV(lv);
     setAssessmentResult(null);
@@ -264,6 +268,10 @@ export default function SoloMissionPlanning() {
     };
 
     const activeCfg = getActiveLVConfig(selectedLV);
+    const equippedPayloadName =
+      selectedInstruments.length > 0
+        ? INSTRUMENTS.find((i) => i.id === selectedInstruments[0])?.name
+        : undefined;
 
     return {
       power: getSlotSummary('power'),
@@ -272,10 +280,7 @@ export default function SoloMissionPlanning() {
         selectedLV && activeCfg
           ? `${selectedLV.name} (${activeCfg.name})`
           : getSlotSummary('propulsion'),
-      adcs:
-        selectedInstruments.length > 0
-          ? `${selectedInstruments.length} PAYLOAD(S)`
-          : getSlotSummary('adcs'),
+      adcs: equippedPayloadName ?? getSlotSummary('adcs'),
       systems: getSlotSummary('systems'),
     };
   }, [selectedBus, selectedInstruments, selectedLV]);
@@ -487,6 +492,16 @@ export default function SoloMissionPlanning() {
                   onSelectSlot={setActiveSlot}
                   equippedLabels={equippedLabels}
                   configuredSlots={configuredSlots}
+                  showRocketPreview={
+                    activeSlot === 'propulsion' &&
+                    activeSubTab === 'launch_vehicle' &&
+                    Boolean(selectedLV)
+                  }
+                  rocketLabel={
+                    selectedLV
+                      ? `${selectedLV.name} (${getActiveLVConfig(selectedLV)?.name ?? ''})`
+                      : undefined
+                  }
                 />
               </div>
 
@@ -505,6 +520,7 @@ export default function SoloMissionPlanning() {
                     onToggleBus={handleToggleBus}
                     onToggleInstrument={handleToggleInstrument}
                     onSelectLV={handleSelectLV}
+                    onSubTabChange={setActiveSubTab}
                   />
                 </div>
               </div>
