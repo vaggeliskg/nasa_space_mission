@@ -43,12 +43,12 @@ export function evaluateMission(
 ): MissionEvaluationResult {
   const { selectedBus, selectedInstruments, selectedLV } = spacecraft;
 
-  const busTotals = calculateBusSelectionTotals(selectedBus);
+  const busTotals = calculateBusSelectionTotals(selectedBus, selectedOrbit);
 
-  let totalMass = 250 + busTotals.mass; // Dry chassis base mass (kg) + bus
-  let totalCost = 35 + busTotals.cost; // Base integration & engineering cost (€M) + bus
+  let totalMass = 250 + busTotals.mass;
+  let totalCost = 35 + busTotals.cost;
   const bolPower = busTotals.bolPower;
-  let powerDraw = 80 + busTotals.powerDraw; // Baseline housekeeping draw (W) + bus
+  let powerDraw = 80 + busTotals.powerDraw;
   const bonusDeltaV = busTotals.bonusDeltaV;
   const degradationRate = busTotals.degradationRate;
   const trlValues: number[] = [...busTotals.trlValues];
@@ -68,7 +68,7 @@ export function evaluateMission(
     trlValues.push(selectedLV.trl ?? 9.0);
   }
 
-  totalMass = Math.round(totalMass * 100) / 100;
+  totalMass = Math.round(totalMass * 1000) / 1000;
   totalCost = Math.round(totalCost * 1000) / 1000;
 
   const rawCapacity = getLauncherMaxPayload(selectedLV, selectedOrbit, mission);
@@ -129,6 +129,52 @@ export function evaluateMission(
     );
   }
 
+  if (!busTotals.commCompatibleWithOrbit && busTotals.incompatibleCommName) {
+    binaryErrors.push(
+      `COMMS GATE FAILED: ${String(busTotals.incompatibleCommName).toUpperCase()} IS NOT USABLE IN ${orbitTargetLabel}.`
+    );
+  }
+
+  if (!busTotals.adcsCompatibleWithOrbit && busTotals.incompatibleAdcsName) {
+    binaryErrors.push(
+      `ADCS GATE FAILED: ${String(busTotals.incompatibleAdcsName).toUpperCase()} USES MAGNETIC TORQUERS AND ONLY WORKS IN LEO (NOT ${orbitTargetLabel}).`
+    );
+  }
+
+  const equippedInst =
+    selectedInstruments.length > 0
+      ? INSTRUMENTS.find((i) => i.id === selectedInstruments[0])
+      : undefined;
+
+  // Enforce pointing accuracy against mission & payload requirement
+  const requiredPointing = Math.min(
+    mission.requirements?.maxPointingArcsec ?? Infinity,
+    equippedInst?.requiredPointingArcsec ?? Infinity
+  );
+
+  if (Number.isFinite(requiredPointing)) {
+    if (busTotals.pointingAccuracyArcsec === null) {
+      binaryErrors.push(
+        `ADCS GATE FAILED: NO ATTITUDE CONTROL SYSTEM ASSIGNED (REQUIRES ≤ ${requiredPointing}" POINTING ACCURACY).`
+      );
+    } else if (busTotals.pointingAccuracyArcsec > requiredPointing) {
+      binaryErrors.push(
+        `ADCS GATE FAILED: POINTING ACCURACY (${busTotals.pointingAccuracyArcsec}") EXCEEDS REQUIRED STABILITY (≤ ${requiredPointing}").`
+      );
+    }
+  }
+
+  // Enforce simultaneous-star survey requirement (catches single-star trap payload)
+  if (
+    mission.requirements?.minStarsSimultaneous &&
+    equippedInst?.simultaneousStars !== undefined &&
+    equippedInst.simultaneousStars < mission.requirements.minStarsSimultaneous
+  ) {
+    binaryErrors.push(
+      `SCIENCE GATE FAILED: ${equippedInst.name.toUpperCase()} ONLY OBSERVES ${equippedInst.simultaneousStars} STAR AT A TIME (SURVEY REQUIRES ≥ ${mission.requirements.minStarsSimultaneous} SIMULTANEOUS STARS).`
+    );
+  }
+
   if (totalCost > mission.maxBudget) {
     const overBy = Math.round((totalCost - mission.maxBudget) * 1000) / 1000;
     binaryErrors.push(
@@ -169,6 +215,14 @@ export function evaluateMission(
   feedbackLog.push(
     `[OK] Booster ${selectedLV!.name} (${activeLVConfig!.name}) cleared for ${orbitTargetLabel}: ${totalMass.toLocaleString()} kg / ${rocketCapacity.toLocaleString()} kg max.`
   );
+
+  if (busTotals.pointingAccuracyArcsec !== null) {
+    feedbackLog.push(
+      `[OK] ADCS Pointing Accuracy verified at ${busTotals.pointingAccuracyArcsec}"${
+        Number.isFinite(requiredPointing) ? ` (≤ ${requiredPointing}" required)` : ''
+      }.`
+    );
+  }
 
   if (busTotals.totalBatteryWh > 0) {
     feedbackLog.push(

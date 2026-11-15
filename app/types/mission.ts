@@ -1,9 +1,7 @@
 export type BusSubCategory =
   | 'batteries'
   | 'solar_panels'
-  | 'comm_frequency'
-  | 'comm_contact'
-  | 'comm_transceiver'
+  | 'comm'
   | 'propulsion'
   | 'adcs'
   | 'structure'
@@ -34,7 +32,7 @@ export interface Objective {
 export interface BusComponent {
   id: string;
   name: string;
-  maker?: string;
+  path?: 'star_obs' | 'telecom' | 'both';
   fits?: string;
   category: 'power' | 'comm' | 'propulsion' | 'adcs' | 'systems';
   subCategory: BusSubCategory;
@@ -44,16 +42,28 @@ export interface BusComponent {
   extraUnitCost?: number; // Additional stacked unit cost (€M), if different from first unit
   priceEur?: number; // Exact EUR unit price for display
   extraUnitPriceEur?: number; // Exact EUR extra pack price for display
-  maxUnits?: number; // Optional max stack limit
-  powerDelta: number; // Positive = generated (W), Negative = drawn (W)
-  rfTransmitWatts?: number; // Enforces 5x power draw rule (draw = 5 * rfTransmitWatts)
+  maxUnits?: number;
+  powerDelta: number; // Positive = generated (W), Negative = drawn (W DC)
+  rfTransmitWatts?: number;
   batteryCapacityWh?: number;
   deltaVAdded?: number;
   degradationRate?: number;
-  dataDownlink?: number;
+  dataDownlink?: number; // Default Gbit/day
+  downlinkByRegime?: {
+    leoHighIncl: number | null; // 400km LEO high inclination (90° Polar / 98° SSO)
+    leoLowIncl: number | null; // 400km LEO low inclination (28.5° / 51.6°)
+    l2: number | null; // Sun-Earth L2
+    gso?: number | null; // 35,786km GSO
+  };
+  linkType?: string;
+  groundNetwork?: string;
+  maxDataRateLabel?: string;
   contactMultiplier?: number;
   frequencyBand?: 'UHF' | 'S-Band' | 'X-Band' | 'Ka-Band' | 'Optical';
   pointingAccuracyArcsec?: number;
+  pointingKnowledgeArcsec?: number;
+  wheelUnloading?: string;
+  compatibleOrbitIds?: ('LEO' | 'GSO' | 'L2')[];
   radiationShieldingMm?: number;
   coolingProvided?: 'ambient' | 'thermal_iso' | 'minus_40c' | 'minus_85c' | 'cryo_160k';
   groundSegmentType?: 'mid_latitude' | 'polar_station' | 'geo_relay';
@@ -71,9 +81,10 @@ export interface Instrument {
   type?: string;
   referenceMission?: string;
   mass: number;
-  cost: number;
-  power: number;
-  dataRate: number;
+  cost: number; // €M
+  priceEur?: number; // Exact EUR price for sub-€1M display
+  power: number; // W
+  dataRate: number; // Gbit/day
   science: number;
   apertureCm?: number;
   simultaneousStars?: number;
@@ -123,6 +134,7 @@ export interface TelemetryData {
   powerGen: number;
   powerDraw: number;
   netPower: number;
+  batteryWh: number;
   dataGenerated: number;
   dataDownlinkCapacity: number;
   scienceScore: number;

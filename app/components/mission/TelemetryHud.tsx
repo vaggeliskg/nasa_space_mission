@@ -59,18 +59,23 @@ export default function TelemetryHud({ currentStage, selectedObjective, telemetr
         </div>
 
         <div className="border border-[#144414] bg-[#051105] p-2">
-          <div className="text-[#1a881a] flex justify-between">
+          <div className="text-[#1a881a] flex justify-between items-start">
             <span>POWER NET</span>
-            <span>GEN: {telemetry.powerGen}W</span>
+            <div className="text-right leading-tight">
+              <div>GEN: {telemetry.powerGen}W</div>
+              <div className="text-[10px] text-amber-400 font-bold">
+                BAT: {(telemetry.batteryWh ?? 0).toLocaleString()} Wh
+              </div>
+            </div>
           </div>
           <div className={`text-base font-bold tracking-wider mt-1 ${telemetry.netPower < 0 ? 'text-red-500' : 'text-[#33ff33]'}`}>
             {telemetry.netPower >= 0 ? `+${telemetry.netPower} W` : `${telemetry.netPower} W`}
           </div>
           <div className="text-[10px] text-[#1a881a]">Draw: {telemetry.powerDraw} W</div>
-        </div>
+        </div>  
 
         <div className="border border-[#144414] bg-[#051105] p-2">
-          <div className="text-[#1a881a] flex justify-between">
+          <div className="text-[#010201] flex justify-between">
             <span>DATA LINK</span>
             <span>CAP: {telemetry.dataDownlinkCapacity}</span>
           </div>

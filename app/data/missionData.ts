@@ -52,7 +52,6 @@ export const BUS_COMPONENTS: BusComponent[] = [
   {
     id: 'bat_isispace_45wh',
     name: 'B1. ISISPACE battery pack',
-    maker: 'ISISPACE, Netherlands',
     fits: 'CubeSats 3U to 12U (up to 3 packs per board)',
     category: 'power',
     subCategory: 'batteries',
@@ -63,12 +62,11 @@ export const BUS_COMPONENTS: BusComponent[] = [
     batteryCapacityWh: 45,
     trl: 9.0,
     description:
-      'ISISPACE (Netherlands) — 45 Wh/unit (~179 Wh/kg). Fits CubeSats 3U to 12U (up to 3 packs per board). Stackable with + / -.',
+      '45 Wh/unit (~179 Wh/kg). Fits CubeSats 3U to 12U (up to 3 packs per board). Stackable with + / -.',
   },
   {
     id: 'bat_dragonfly_28_300',
     name: 'B2. Dragonfly 28-300 Battery Module',
-    maker: 'Dragonfly Aerospace, South Africa',
     fits: 'micro, ~50 kg class',
     category: 'power',
     subCategory: 'batteries',
@@ -79,17 +77,16 @@ export const BUS_COMPONENTS: BusComponent[] = [
     batteryCapacityWh: 270,
     trl: 9.0,
     description:
-      'Dragonfly Aerospace (South Africa) — 270 Wh/unit (up to 297 Wh, ~57–62 Wh/kg). Fits microsatellites (~50 kg class). Stackable with + / -.',
+      '270 Wh/unit (up to 297 Wh, ~57–62 Wh/kg). Fits microsatellites (~50 kg class). Stackable with + / -.',
   },
   {
     id: 'bat_endurosat_eps_iv',
     name: 'B3. EnduroSat EPS IV battery pack',
-    maker: 'EnduroSat, Bulgaria',
     fits: 'mini to medium',
     category: 'power',
     subCategory: 'batteries',
-    mass: 19.5, // First unit includes power distribution
-    extraUnitMass: 13.0, // +13 kg per extra pack
+    mass: 19.5,
+    extraUnitMass: 13.0,
     cost: 0.07, // €70,000 first unit
     extraUnitCost: 0.03, // ~€30,000 each extra pack
     priceEur: 70000,
@@ -99,13 +96,12 @@ export const BUS_COMPONENTS: BusComponent[] = [
     hasRedundancy: true,
     trl: 9.0,
     description:
-      'EnduroSat (Bulgaria) — 1,100 Wh/unit (~85 Wh/kg). 1st unit: 19.5 kg & €70,000 (includes power distribution); extra packs: +13 kg & ~€30,000 each.',
+      '1,100 Wh/unit (~85 Wh/kg). 1st unit: 19.5 kg & €70,000 (includes power distribution); extra packs: +13 kg & ~€30,000 each.',
   },
   {
     id: 'bat_saft_ves180',
     name: 'B4. Saft VES180 cell',
-    maker: 'Saft, France',
-    fits: 'medium to large, GEO and L2 (used on Alphabus)',
+    fits: 'medium to large, GEO and L2',
     category: 'power',
     subCategory: 'batteries',
     mass: 1.11,
@@ -116,7 +112,7 @@ export const BUS_COMPONENTS: BusComponent[] = [
     hasRedundancy: true,
     trl: 9.5,
     description:
-      'Saft (France) — ~180 Wh/cell (≥175 Wh/kg). Built for medium-to-large GEO & L2 spacecraft (Alphabus flight heritage). Stackable with + / -.',
+      '~180 Wh/cell (≥175 Wh/kg). Built for medium-to-large GEO & L2 spacecraft. Stackable with + / -.',
   },
 
   // =========================================================================
@@ -128,10 +124,10 @@ export const BUS_COMPONENTS: BusComponent[] = [
     fits: 'CubeSats 6U to 12U',
     category: 'power',
     subCategory: 'solar_panels',
-    mass: 1.6, // 2 x 0.82 kg
-    cost: 0.0155, // ~€15,500
+    mass: 1.6,
+    cost: 0.0155,
     priceEur: 15500,
-    powerDelta: 109, // 2 wings x 54.7 W
+    powerDelta: 109,
     degradationRate: 0.03,
     trl: 9.0,
     description:
@@ -144,7 +140,7 @@ export const BUS_COMPONENTS: BusComponent[] = [
     category: 'power',
     subCategory: 'solar_panels',
     mass: 7.0,
-    cost: 0.0506, // ~€50,600
+    cost: 0.0506,
     priceEur: 50600,
     powerDelta: 355,
     degradationRate: 0.025,
@@ -159,9 +155,9 @@ export const BUS_COMPONENTS: BusComponent[] = [
     category: 'power',
     subCategory: 'solar_panels',
     mass: 10.0,
-    cost: 0.15665, // ~€142,400 to €170,900
+    cost: 0.15665,
     priceEur: 156650,
-    powerDelta: 1100, // ~1,000 to 1,200 W (100–120 W/kg)
+    powerDelta: 1100,
     degradationRate: 0.02,
     trl: 9.0,
     description:
@@ -174,7 +170,7 @@ export const BUS_COMPONENTS: BusComponent[] = [
     category: 'power',
     subCategory: 'solar_panels',
     mass: 27.6,
-    cost: 0.1806, // ~€180,600
+    cost: 0.1806,
     priceEur: 180600,
     powerDelta: 1268,
     degradationRate: 0.02,
@@ -184,180 +180,198 @@ export const BUS_COMPONENTS: BusComponent[] = [
   },
 
   // =========================================================================
-  // HP-02: COMMUNICATIONS — 2.1 FREQUENCY BAND (4 CARDS)
+  // HP-02: COMMUNICATIONS — STAR OBSERVATION (C1–C6) & TELECOM (T-C1 to T-C3 + C4)
   // =========================================================================
   {
-    id: 'freq_uhf',
-    name: 'UHF Band (400–450 MHz)',
+    id: 'comm_c1_uhf',
+    name: 'C1. UHF',
+    path: 'star_obs',
     category: 'comm',
-    subCategory: 'comm_frequency',
-    frequencyBand: 'UHF',
-    mass: 1,
-    cost: 4,
-    powerDelta: -4,
-    dataDownlink: 0.5,
+    subCategory: 'comm',
+    linkType: 'Radio',
+    groundNetwork: 'University station, mid-latitude',
+    maxDataRateLabel: '9.6 kbit/s',
+    mass: 0.075, // 75 g
+    cost: 0.0085, // ~€8,500
+    priceEur: 8500,
+    powerDelta: -4, // under 4 W DC
+    dataDownlink: 0.016,
+    downlinkByRegime: {
+      leoHighIncl: 0.016,
+      leoLowIncl: 0.016,
+      l2: null,
+    },
     trl: 9.5,
-    riskPenaltyPercent: 6,
-    riskNote: 'Low bandwidth; unsuitable for high-throughput science or telecom relays.',
-    description: 'Omnidirectional TT&C link; resilient to tumble but severely bandwidth-limited.',
+    description:
+      'Radio transceiver bundled with mid-latitude university station (9.6 kbit/s max). Delivers ~0.016 Gbit/day in LEO; not usable at L2.',
   },
   {
-    id: 'freq_sband',
-    name: 'S-Band (2.2 GHz)',
+    id: 'comm_c2_sband',
+    name: 'C2. S-band',
+    path: 'star_obs',
     category: 'comm',
-    subCategory: 'comm_frequency',
-    frequencyBand: 'S-Band',
-    mass: 2,
-    cost: 8,
-    powerDelta: -8,
-    dataDownlink: 2.0,
+    subCategory: 'comm',
+    linkType: 'Radio',
+    groundNetwork: 'Commercial network with polar station',
+    maxDataRateLabel: '2 Mbit/s',
+    mass: 0.36, // 360 g
+    cost: 0.0125, // ~€12,500
+    priceEur: 12500,
+    powerDelta: -12, // 12 W DC
+    dataDownlink: 12,
+    downlinkByRegime: {
+      leoHighIncl: 12,
+      leoLowIncl: 3.4,
+      l2: null,
+    },
     trl: 9.5,
-    description: 'Standard spacecraft telemetry & command band; weather-immune up to 2 Mbps.',
+    description:
+      'Radio link with commercial polar ground network (2 Mbit/s max). Delivers ~12 Gbit/day in high-incl. LEO and ~3.4 Gbit/day in low-incl. LEO; not usable at L2.',
   },
   {
-    id: 'freq_xband',
-    name: 'X-Band (8.4 GHz)',
+    id: 'comm_c3_xband',
+    name: 'C3. X-band',
+    path: 'star_obs',
     category: 'comm',
-    subCategory: 'comm_frequency',
-    frequencyBand: 'X-Band',
-    mass: 4,
-    cost: 18,
-    powerDelta: -15,
-    dataDownlink: 120,
+    subCategory: 'comm',
+    linkType: 'Radio',
+    groundNetwork: 'Commercial network with polar station',
+    maxDataRateLabel: '140 Mbit/s',
+    mass: 0.3, // ~300 g
+    cost: 0.0287, // ~€28,700
+    priceEur: 28700,
+    powerDelta: -12, // 12 W DC
+    dataDownlink: 136,
+    downlinkByRegime: {
+      leoHighIncl: 136,
+      leoLowIncl: 38,
+      l2: null,
+    },
     trl: 9.0,
-    description: 'High-rate Earth observation & deep-space science downlink allocation.',
+    description:
+      'High-rate X-band radio with commercial polar ground network (140 Mbit/s max). Delivers ~136 Gbit/day in high-incl. LEO (~38 Gbit/day low-incl.); not usable at L2.',
   },
   {
-    id: 'freq_kaband_optical',
-    name: 'Ka-Band / Optical Hybrid (32 GHz + 1550 nm)',
+    id: 'comm_c4_laser',
+    name: 'C4. Laser',
+    path: 'both',
     category: 'comm',
-    subCategory: 'comm_frequency',
-    frequencyBand: 'Ka-Band',
-    mass: 7,
-    cost: 36,
-    powerDelta: -25,
-    dataDownlink: 1500,
+    subCategory: 'comm',
+    linkType: 'Laser (infrared light)',
+    groundNetwork: 'Optical ground station',
+    maxDataRateLabel: '100 Mbit/s',
+    mass: 0.38, // ~360 to 400 g
+    cost: 0.089, // ~€89,000
+    priceEur: 89000,
+    powerDelta: -8.25, // 8 to 8.5 W DC
+    dataDownlink: 168,
+    downlinkByRegime: {
+      leoHighIncl: 168,
+      leoLowIncl: 168,
+      l2: null,
+      gso: 168,
+    },
     trl: 8.5,
-    description: 'Multi-gigabit Ka-band feeder + optical laser crosslink spectrum.',
+    description:
+      'Infrared optical laser terminal with optical ground station (100 Mbit/s max). Delivers ~168 Gbit/day in clear-sky LEO/GSO; not usable at L2.',
   },
-
-  // =========================================================================
-  // HP-02: COMMUNICATIONS — 2.2 CONTACT TIME & GROUND NETWORK (4 CARDS)
-  // =========================================================================
   {
-    id: 'contact_single_midlat',
-    name: 'Single Mid-Latitude Ground Station (~28 min/day)',
+    id: 'comm_c5_ds_xband',
+    name: 'C5. Deep-space X-band',
+    path: 'star_obs',
     category: 'comm',
-    subCategory: 'comm_contact',
-    groundSegmentType: 'mid_latitude',
-    contactMultiplier: 1.0,
-    mass: 0,
-    cost: 5,
-    powerDelta: 0,
+    subCategory: 'comm',
+    linkType: 'Radio',
+    groundNetwork: 'Deep Space Network',
+    maxDataRateLabel: '256 kbit/s',
+    mass: 1.1, // 1.1 kg
+    cost: 0.356, // ~€356,000
+    priceEur: 356000,
+    powerDelta: -35, // 35 W DC
+    dataDownlink: 6.9,
+    downlinkByRegime: {
+      leoHighIncl: null,
+      leoLowIncl: null,
+      l2: 6.9,
+    },
+    trl: 9.0,
+    description:
+      'Deep-space X-band transponder bundled with Deep Space Network tracking (256 kbit/s max). Delivers ~6.9 Gbit/day from L2; not usable in LEO.',
+  },
+  {
+    id: 'comm_c6_ds_xkaband',
+    name: 'C6. Large deep-space X/Ka-band',
+    path: 'star_obs',
+    category: 'comm',
+    subCategory: 'comm',
+    linkType: 'Radio',
+    groundNetwork: 'Deep Space Network',
+    maxDataRateLabel: 'Up to 300 Msymbols/s',
+    mass: 3.0, // 3.0 kg
+    cost: 0.89, // ~€890,000
+    priceEur: 890000,
+    powerDelta: -30, // 30 W DC
+    dataDownlink: 130,
+    downlinkByRegime: {
+      leoHighIncl: null,
+      leoLowIncl: null,
+      l2: 130,
+    },
+    trl: 9.0,
+    description:
+      'High-rate X/Ka-band deep-space radio bundled with Deep Space Network (up to 300 Msymbols/s). Delivers ~130 Gbit/day from L2; not usable in LEO.',
+  },
+  {
+    id: 'comm_tc1_uhf',
+    name: 'T-C1. UHF',
+    path: 'telecom',
+    category: 'comm',
+    subCategory: 'comm',
+    linkType: 'Radio (TT&C)',
+    groundNetwork: 'University station, mid-latitude',
+    mass: 0.075, // 75 g
+    cost: 0.0085, // ~€8,500
+    priceEur: 8500,
+    powerDelta: -4, // under 4 W
+    dataDownlink: 0.016,
     trl: 9.5,
-    riskPenaltyPercent: 5,
-    riskNote: '4 passes/day; up to 90-minute store-and-forward latency gaps.',
-    description: 'One university/agency dish (~4 passes/day). Low ops cost, high latency.',
+    description:
+      'Compact UHF telemetry & command transceiver (75 g, < 4 W DC). Same hardware baseline as C1.',
   },
   {
-    id: 'contact_polar_svalbard',
-    name: 'Polar Station Network — Svalbard & Kiruna (14 passes/day)',
+    id: 'comm_tc2_sband',
+    name: 'T-C2. S-band',
+    path: 'telecom',
     category: 'comm',
-    subCategory: 'comm_contact',
-    groundSegmentType: 'polar_station',
-    contactMultiplier: 3.5,
-    mass: 0,
-    cost: 18,
-    powerDelta: 0,
-    hasRedundancy: true,
-    trl: 9.0,
-    description: 'High-latitude Arctic dishes capturing every polar LEO revolution.',
-  },
-  {
-    id: 'contact_dsn_global',
-    name: 'Global Deep Space Network (8 hrs/day Scheduled)',
-    category: 'comm',
-    subCategory: 'comm_contact',
-    groundSegmentType: 'mid_latitude',
-    contactMultiplier: 6.0,
-    mass: 0,
-    cost: 35,
-    powerDelta: 0,
-    hasRedundancy: true,
-    trl: 9.0,
-    description: '34m/70m global antenna complex (Madrid, Goldstone, Canberra) for L2/deep space.',
-  },
-  {
-    id: 'contact_geo_relay_247',
-    name: '24/7 Continuous GEO Relay (EDRS / TDRS)',
-    category: 'comm',
-    subCategory: 'comm_contact',
-    groundSegmentType: 'geo_relay',
-    contactMultiplier: 12.0,
-    mass: 0,
-    cost: 55,
-    powerDelta: 0,
-    hasRedundancy: true,
-    trl: 8.5,
-    description: 'Real-time continuous space-to-ground routing with near-zero latency.',
-  },
-
-  // =========================================================================
-  // HP-02: COMMUNICATIONS — 2.3 TRANSCEIVER & ANTENNA (5x RF POWER RULE!)
-  // =========================================================================
-  {
-    id: 'tx_2w_patch',
-    name: '2W RF Patch Transceiver (Draws 10W — 5x Rule)',
-    category: 'comm',
-    subCategory: 'comm_transceiver',
-    rfTransmitWatts: 2,
-    powerDelta: -10,
-    dataDownlink: 2,
-    mass: 1.5,
-    cost: 6,
+    subCategory: 'comm',
+    linkType: 'Radio (TT&C)',
+    groundNetwork: 'Commercial network with polar station',
+    mass: 0.36, // 360 g
+    cost: 0.0125, // ~€12,500
+    priceEur: 12500,
+    powerDelta: -12, // 12 W
+    dataDownlink: 12,
     trl: 9.5,
-    description: '2W RF output amplifier drawing 10W bus power (20% PA efficiency) for LEO.',
+    description:
+      'S-band telemetry & command transceiver (360 g, 12 W DC). Same hardware baseline as C2.',
   },
   {
-    id: 'tx_10w_horn',
-    name: '10W RF Medium-Gain Horn (Draws 50W — 5x Rule)',
+    id: 'comm_tc3_sband_backup',
+    name: 'T-C3. S-band + backup',
+    path: 'telecom',
     category: 'comm',
-    subCategory: 'comm_transceiver',
-    rfTransmitWatts: 10,
-    powerDelta: -50,
-    dataDownlink: 80,
-    mass: 5,
-    cost: 18,
-    trl: 9.0,
-    description: '10W RF SSPA drawing 50W electrical power for high-rate X-band downlinks.',
-  },
-  {
-    id: 'tx_35w_hga',
-    name: '35W RF High-Gain Dish + TWTA (Draws 175W — 5x Rule)',
-    category: 'comm',
-    subCategory: 'comm_transceiver',
-    rfTransmitWatts: 35,
-    powerDelta: -175,
-    dataDownlink: 350,
-    mass: 22,
-    cost: 42,
+    subCategory: 'comm',
+    linkType: 'Redundant Radio (TT&C)',
+    groundNetwork: 'Commercial network with polar station',
+    mass: 0.72, // 720 g (2 x C2)
+    cost: 0.0249, // ~€24,900
+    priceEur: 24900,
+    powerDelta: -12, // 12 W (one transmits at a time)
+    dataDownlink: 12,
     hasRedundancy: true,
-    trl: 9.0,
-    description: '35W RF Traveling-Wave Tube Amplifier drawing 175W bus power for GEO/L2.',
-  },
-  {
-    id: 'tx_80w_phased_array',
-    name: '80W RF Multi-Beam Phased Array (Draws 400W — 5x Rule)',
-    category: 'comm',
-    subCategory: 'comm_transceiver',
-    rfTransmitWatts: 80,
-    powerDelta: -400,
-    dataDownlink: 1800,
-    mass: 48,
-    cost: 78,
-    hasRedundancy: true,
-    trl: 8.5,
-    description: '80W RF telecom transponder drawing 400W bus power for multi-beam trunking.',
+    trl: 9.5,
+    description:
+      'Dual redundant S-band transceivers (2× C2, one transmits at a time — 720 g total, 12 W DC active draw).',
   },
 
   // =========================================================================
@@ -414,58 +428,100 @@ export const BUS_COMPONENTS: BusComponent[] = [
   },
 
   // =========================================================================
-  // HP-04: ADCS (ATTITUDE) — 4.1 ATTITUDE CONTROL (4 CARDS)
+  // HP-04: ADCS (ATTITUDE) — 4.1 ATTITUDE CONTROL (5 CARDS FOR BOTH MISSIONS)
   // =========================================================================
   {
-    id: 'adcs_nano_coarse',
-    name: 'Nanosat Reaction Wheels + Magnetorquers (90 arcsec)',
+    id: 'adcs_a1_simple',
+    name: 'A1. Simple',
+    fits: 'CubeSat',
     category: 'adcs',
     subCategory: 'adcs',
-    mass: 3,
-    cost: 10,
-    powerDelta: -10,
-    pointingAccuracyArcsec: 90,
-    trl: 9.0,
-    description: 'BRITE-class 3-axis micro-wheels (90 arcsec RMS) for wide-field LEO pointing.',
+    mass: 0.1, // ~0.05 to 0.16 kg
+    cost: 0.0178, // ~€17,800
+    priceEur: 17800,
+    powerDelta: -2, // ~1 to 2.3 W
+    pointingAccuracyArcsec: 18000, // ~5 deg (18,000 arcsec)
+    pointingKnowledgeArcsec: 360, // ~0.1 deg (360 arcsec)
+    wheelUnloading: 'No wheels',
+    compatibleOrbitIds: ['LEO'],
+    trl: 9.5,
+    description:
+      '3 magnetic torquers (coils pushing against Earth’s magnetic field) + sun sensors & magnetometer; no wheels. ~5° (18,000") accuracy, ~0.1° (360") knowledge. Works in LEO only.',
   },
   {
-    id: 'adcs_star_tracker_mid',
-    name: 'Dual Star Trackers + 4-Wheel Pyramid (5 arcsec)',
+    id: 'adcs_a2a_cubesat',
+    name: 'A2a. CubeSat unit',
+    fits: '3U to 12U',
     category: 'adcs',
     subCategory: 'adcs',
-    mass: 12,
-    cost: 24,
-    powerDelta: -20,
-    pointingAccuracyArcsec: 5.0,
-    hasRedundancy: true,
+    mass: 1.23,
+    cost: 0.089, // ~€89,000
+    priceEur: 89000,
+    powerDelta: -4, // ~4 W
+    pointingAccuracyArcsec: 11, // 0.003 deg (~11 arcsec)
+    pointingKnowledgeArcsec: 6, // ~6 arcsec
+    wheelUnloading: 'Magnetic torquers',
+    compatibleOrbitIds: ['LEO'],
     trl: 9.0,
-    description: 'Agile zero-momentum wheel array delivering 5 arcsec pointing stability.',
+    description:
+      'Integrated 3U–12U unit: 3 reaction wheels + 3 magnetic torquers + 1 star tracker. 0.003° (~11") accuracy, ~6" knowledge. Works in LEO only.',
   },
   {
-    id: 'adcs_piezo_fine',
-    name: 'Star Tracker + 2-Axis Piezo Stage (0.5 arcsec)',
+    id: 'adcs_a2b_smallsat',
+    name: 'A2b. Smallsat unit',
+    fits: 'micro to mini',
     category: 'adcs',
     subCategory: 'adcs',
-    mass: 18,
-    cost: 38,
-    powerDelta: -28,
-    pointingAccuracyArcsec: 0.5,
-    hasRedundancy: true,
-    trl: 8.5,
-    description: 'ASTERIA/CoRoT-grade coarse wheels + fine piezo focal-plane stabilization.',
-  },
-  {
-    id: 'adcs_radhard_fgs',
-    name: 'Fine Guidance Sensor + Cold-Gas Micro-Prop (0.01 arcsec)',
-    category: 'adcs',
-    subCategory: 'adcs',
-    mass: 42,
-    cost: 75,
-    powerDelta: -55,
-    pointingAccuracyArcsec: 0.01,
+    mass: 7, // ~7 kg
+    cost: 0.267, // ~€267,000
+    priceEur: 267000,
+    powerDelta: -15, // ~15 W (up to ~170 W while turning)
+    pointingAccuracyArcsec: 7, // 0.002 deg (~7 arcsec)
+    pointingKnowledgeArcsec: 6, // ~6 arcsec
+    wheelUnloading: 'Magnetic torquers',
+    compatibleOrbitIds: ['LEO'],
     hasRedundancy: true,
     trl: 9.0,
-    description: 'Kepler/Gaia-grade Fine Guidance Sensors (< 9 mas jitter) for astrometry.',
+    description:
+      'Micro-to-mini integrated unit: 3–4 reaction wheels + 3 magnetic torquers + 2 star trackers. 0.002° (~7") accuracy, ~6" knowledge (~15 W, up to ~170 W slewing). Works in LEO only.',
+  },
+  {
+    id: 'adcs_a3_advanced',
+    name: 'A3. Advanced',
+    fits: 'medium to large',
+    category: 'adcs',
+    subCategory: 'adcs',
+    mass: 17, // ~17 kg
+    cost: 0.89, // ~€890,000
+    priceEur: 890000,
+    powerDelta: -30, // ~30 W (up to ~440 W while turning)
+    pointingAccuracyArcsec: 1, // ~1 arcsec
+    pointingKnowledgeArcsec: 3, // 3 arcsec
+    wheelUnloading: 'Magnetic torquers',
+    compatibleOrbitIds: ['LEO'],
+    hasRedundancy: true,
+    trl: 9.0,
+    description:
+      'Medium-to-large suite: 4 large reaction wheels + 3 large magnetic torquers + 1 high-accuracy star tracker + telescope centroid loop. ~1" accuracy, 3" knowledge (~30 W, up to ~440 W slewing). Works in LEO only.',
+  },
+  {
+    id: 'adcs_a4_wheels_thrusters',
+    name: 'A4. Wheels + thrusters',
+    fits: 'any (CubeSat & large versions)',
+    category: 'adcs',
+    subCategory: 'adcs',
+    mass: 20, // ~20 kg (CubeSat version ~1.9 kg)
+    cost: 1.068, // ~€1,068,000 (CubeSat version ~€178,000)
+    priceEur: 1068000,
+    powerDelta: -30, // as A3 + ~20 W while firing
+    pointingAccuracyArcsec: 1, // ~1 arcsec (CubeSat version ~11 arcsec)
+    pointingKnowledgeArcsec: 3, // 3 arcsec (CubeSat version ~6 arcsec)
+    wheelUnloading: 'Thrusters (cold-gas)',
+    compatibleOrbitIds: ['LEO', 'GSO', 'L2'],
+    hasRedundancy: true,
+    trl: 9.0,
+    description:
+      'Reaction wheels + star tracker + cold-gas thrusters for wheel unloading instead of magnetic torquers. ~1" accuracy, 3" knowledge (CubeSat: 1.9 kg, ~11", €178k). Works in LEO, GEO, and L2.',
   },
 
   // =========================================================================
@@ -513,7 +569,7 @@ export const BUS_COMPONENTS: BusComponent[] = [
     cost: 80,
     powerDelta: 0,
     trl: 9.5,
-    description: 'Reinforced composite/titanium central tube built for Alphasat/EDRS-class buses.',
+    description: 'Reinforced composite/titanium central tube built for multi-ton GEO platforms.',
   },
 
   // =========================================================================
@@ -595,7 +651,7 @@ export const BUS_COMPONENTS: BusComponent[] = [
     powerDelta: -18,
     coolingProvided: 'minus_40c',
     trl: 9.0,
-    description: 'CoRoT/GEO-class heat-pipe loop maintaining optical/RF bays at -40°C.',
+    description: 'Heat-pipe loop maintaining optical/RF bays at -40°C.',
   },
   {
     id: 'therm_cryo_minus85',
@@ -607,7 +663,7 @@ export const BUS_COMPONENTS: BusComponent[] = [
     powerDelta: -35,
     coolingProvided: 'minus_85c',
     trl: 8.5,
-    description: 'Kepler-class passive radiative cooler eliminating CCD dark current at -85°C.',
+    description: 'Passive radiative cooler eliminating CCD dark current at -85°C.',
   },
   {
     id: 'therm_sunshield_160k',
@@ -619,7 +675,7 @@ export const BUS_COMPONENTS: BusComponent[] = [
     powerDelta: -95,
     coolingProvided: 'cryo_160k',
     trl: 8.5,
-    description: 'Gaia-class multi-layer sunshield & active cryocooler holding 160 K (±50 µK).',
+    description: 'Multi-layer sunshield & active cryocooler holding 160 K (±50 µK).',
   },
 
   // =========================================================================
@@ -649,7 +705,7 @@ export const BUS_COMPONENTS: BusComponent[] = [
     powerDelta: -12,
     hasRedundancy: true,
     trl: 9.0,
-    description: 'ESA standard fault-tolerant SPARC processor with EDAC-protected memory.',
+    description: 'Fault-tolerant SPARC processor with EDAC-protected memory.',
   },
   {
     id: 'obc_rad750_dual',
@@ -702,7 +758,7 @@ export const BUS_COMPONENTS: BusComponent[] = [
     powerDelta: -2,
     deltaVAdded: 65,
     trl: 8.5,
-    description: '4 m² gossamer drag sail accelerating LEO re-entry to meet 5-year FCC/ESA rules.',
+    description: '4 m² gossamer drag sail accelerating LEO re-entry to meet 5-year disposal rules.',
   },
   {
     id: 'eol_controlled_reentry',
@@ -715,7 +771,7 @@ export const BUS_COMPONENTS: BusComponent[] = [
     deltaVAdded: 140,
     hasRedundancy: true,
     trl: 9.0,
-    description: 'Targeted Point Nemo ocean disposal burn + battery/propellant tank venting.',
+    description: 'Targeted ocean disposal burn + battery/propellant tank venting.',
   },
   {
     id: 'eol_graveyard_boost',
@@ -734,20 +790,21 @@ export const BUS_COMPONENTS: BusComponent[] = [
 
 export const INSTRUMENTS: Instrument[] = [
   // =========================================================================
-  // PATH 1: STAR OBSERVATION PAYLOADS (5 CARDS)
+  // PATH 1: STAR OBSERVATION PAYLOADS (6 CARDS)
   // =========================================================================
   {
     id: 'inst_asteria',
     name: 'Compact CMOS camera, 6 cm',
     path: 'star_obs',
-    type: '6.07 cm Lens + Piezo CMOS',
+    type: '6 cm Precision Photometric CMOS Camera',
     referenceMission: 'ASTERIA',
-    mass: 6,
-    cost: 15,
-    power: 18,
+    mass: 4,
+    cost: 0.45, // ~€0.45M
+    priceEur: 450000,
+    power: 5,
     dataRate: 1.2,
     science: 45,
-    apertureCm: 6.07,
+    apertureCm: 6.0,
     simultaneousStars: 1,
     requiredPointingArcsec: 5,
     requiredCooling: 'thermal_iso',
@@ -755,17 +812,18 @@ export const INSTRUMENTS: Instrument[] = [
     isEstimated: true,
     trl: 8.5,
     description:
-      '6.07 cm f/1.4 precision lens with CMOS imager. Achieves high photometric precision on 1 target star at a time (Power: est.).',
+      'Compact 6 cm CMOS camera (~4 kg, ~5 W). High-precision photometry on 1 target star at a time.',
   },
   {
     id: 'inst_brite',
     name: 'Wide-field nano-telescope, 3 cm',
     path: 'star_obs',
-    type: '3 cm Wide-FOV Photometer (24°)',
+    type: '3 cm Wide-FOV Optical Photometer',
     referenceMission: 'BRITE',
-    mass: 7,
-    cost: 18,
-    power: 15,
+    mass: 2.5,
+    cost: 0.27, // ~€0.27M
+    priceEur: 270000,
+    power: 2,
     dataRate: 1.4,
     science: 65,
     apertureCm: 3.0,
@@ -776,16 +834,37 @@ export const INSTRUMENTS: Instrument[] = [
     isEstimated: true,
     trl: 9.0,
     description:
-      '24° wide-field 3 cm optical photometer observing up to 15 bright stars simultaneously in LEO (Power/Data: est.).',
+      'Ultra-light 3 cm wide-field nano-telescope (~2.5 kg, ~2 W) monitoring up to 15 bright stars simultaneously.',
+  },
+  {
+    id: 'inst_cheops_trap',
+    name: 'Precision single-star telescope, 32 cm',
+    path: 'star_obs',
+    type: '32 cm Ritchey-Chrétien Photometer (Single Target)',
+    referenceMission: 'CHEOPS (Trap Card)',
+    mass: 58,
+    cost: 15, // ~€15M
+    power: 60,
+    dataRate: 1.2,
+    science: 40,
+    apertureCm: 32,
+    simultaneousStars: 1,
+    requiredPointingArcsec: 4.0,
+    requiredCooling: 'minus_40c',
+    compatibleOrbits: ['LEO', 'LEO_POLAR'],
+    isEstimated: true,
+    trl: 9.0,
+    description:
+      '32 cm high-precision photometer (58 kg, 60 W) optimized for ultra-deep follow-up of 1 individual star at a time.',
   },
   {
     id: 'inst_corot',
     name: 'Small CCD telescope, 27 cm',
     path: 'star_obs',
-    type: '27 cm Off-Axis Telescope + 4 CCDs (16.8 MP)',
+    type: '27 cm Off-Axis Telescope + 4 CCDs',
     referenceMission: 'CoRoT',
     mass: 300,
-    cost: 120,
+    cost: 44.5, // ~€44.5M
     power: 150,
     dataRate: 1.5,
     science: 85,
@@ -796,17 +875,17 @@ export const INSTRUMENTS: Instrument[] = [
     compatibleOrbits: ['LEO_POLAR', 'LEO'],
     trl: 9.0,
     description:
-      '27 cm off-axis telescope monitoring up to 6,000 stars at once at 1.5 Gbit/day. Requires -40°C focal box cooling.',
+      '27 cm space telescope (300 kg, 150 W) monitoring up to 6,000 stars simultaneously at 1.5 Gbit/day. Requires -40°C focal box cooling.',
   },
   {
     id: 'inst_kepler',
     name: 'Wide-field photometer, 95 cm',
     path: 'star_obs',
-    type: '0.95 m Schmidt Telescope + 42 CCDs (95 MP)',
+    type: '95 cm Schmidt Telescope + 42 CCDs',
     referenceMission: 'Kepler',
     mass: 478,
-    cost: 260,
-    power: 280,
+    cost: 133.5, // ~€133.5M
+    power: 300,
     dataRate: 4.5,
     science: 110,
     apertureCm: 95,
@@ -817,16 +896,16 @@ export const INSTRUMENTS: Instrument[] = [
     isEstimated: true,
     trl: 9.0,
     description:
-      '95-megapixel Schmidt focal plane surveying 100,000 stars simultaneously. Requires -85°C radiator cooling (Power: est.).',
+      '95 cm Schmidt wide-field photometer (478 kg, ~300 W) surveying 100,000 stars simultaneously. Requires -85°C cooling.',
   },
   {
     id: 'inst_gaia',
     name: 'Dual-telescope survey instrument',
     path: 'star_obs',
-    type: 'Dual 1.45×0.5 m Mirrors + 106 CCDs (938 MP)',
+    type: 'Dual Astrometric & Spectroscopic Telescope',
     referenceMission: 'Gaia',
-    mass: 710,
-    cost: 420,
+    mass: 524,
+    cost: 150, // ~€150M
     power: 627,
     dataRate: 135,
     science: 150,
@@ -837,22 +916,23 @@ export const INSTRUMENTS: Instrument[] = [
     compatibleOrbits: ['L2'],
     trl: 9.0,
     description:
-      'Twin astrometric & spectroscopic telescopes with nearly 1 billion pixels mapping 2 billion stars. Demands 160 K sunshield stability.',
+      'Twin astrometric & spectroscopic survey payload module (524 kg, 627 W) mapping millions of stars from L2. Demands 160 K sunshield stability.',
   },
 
   // =========================================================================
-  // PATH 2: TELECOMMUNICATIONS PAYLOADS (5 CARDS)
+  // PATH 2: TELECOMMUNICATIONS PAYLOADS (6 CARDS)
   // =========================================================================
   {
     id: 'inst_opssat_xband',
     name: 'Compact X-band radio',
     path: 'telecom',
-    type: '50 Mbps X-Band RF Payload',
-    referenceMission: 'OPS-SAT EWC27',
-    mass: 1,
-    cost: 8,
-    power: 10,
-    dataRate: 84,
+    type: '140 Mbit/s X-Band RF Payload',
+    referenceMission: 'OPS-SAT / C3',
+    mass: 0.3, // ~0.3 kg
+    cost: 0.0287, // ~€28,700
+    priceEur: 28700,
+    power: 12,
+    dataRate: 136,
     science: 40,
     requiredPointingArcsec: 120,
     requiredCooling: 'ambient',
@@ -860,88 +940,112 @@ export const INSTRUMENTS: Instrument[] = [
     isLaserLink: false,
     trl: 9.5,
     description:
-      'Compact 50 Mbps X-band RF transmitter. Pairs with high-latitude polar ground stations to exceed 100 Gbit/day.',
+      'Compact 140 Mbit/s X-band radio payload (~0.3 kg, 12 W). Delivers ~136 Gbit/day in high-inclination LEO with polar stations.',
   },
   {
     id: 'inst_tbird',
     name: 'CubeSat laser terminal',
     path: 'telecom',
-    type: 'Direct-to-Earth Optical Laser + 2 TB Buffer',
+    type: '3U Optical Lasercom Terminal',
     referenceMission: 'TBIRD',
-    mass: 3,
-    cost: 22,
-    power: 100,
+    mass: 3, // ~3 kg
+    cost: 0.89, // ~€0.89M
+    priceEur: 890000,
+    power: 50,
     dataRate: 4800,
     science: 85,
     requiredPointingArcsec: 2.0,
     requiredCooling: 'thermal_iso',
     compatibleOrbits: ['LEO', 'LEO_POLAR'],
     isLaserLink: true,
-    trl: 8.0,
-    description:
-      '3 kg optical laser terminal delivering up to 4.8 TB/pass at 200 Gbps. Vulnerable to cloud cover without RF backup.',
-  },
-  {
-    id: 'inst_lcrd',
-    name: 'Laser relay terminal pair',
-    path: 'telecom',
-    type: '10.8 cm Dual Laser Relay (1.2 Gbps)',
-    referenceMission: 'LCRD',
-    mass: 65,
-    cost: 90,
-    power: 130,
-    dataRate: 1200,
-    science: 100,
-    apertureCm: 10.8,
-    requiredPointingArcsec: 2.0,
-    requiredCooling: 'minus_40c',
-    compatibleOrbits: ['GEO'],
-    isLaserLink: true,
     isEstimated: true,
     trl: 8.5,
     description:
-      'Dual optical relay terminals providing 1.2 Gbps low-latency space-to-ground routing (Mass/Power: est.).',
+      '3U optical lasercom payload (~3 kg, ~50 W) delivering multi-terabit direct-to-Earth optical bursts in clear-sky LEO.',
+  },
+  {
+    id: 'inst_leo_kuband',
+    name: 'LEO Ku-band broadband payload',
+    path: 'telecom',
+    type: 'LEO Ku-Band Broadband Transponder',
+    referenceMission: 'LEO Broadband Smallsat',
+    mass: 50, // ~50 kg
+    cost: 0.45, // ~€0.45M
+    priceEur: 450000,
+    power: 300,
+    dataRate: 600,
+    science: 90,
+    requiredPointingArcsec: 30,
+    requiredCooling: 'thermal_iso',
+    compatibleOrbits: ['LEO', 'LEO_POLAR'],
+    isLaserLink: false,
+    isEstimated: true,
+    trl: 9.0,
+    description:
+      'High-capacity LEO Ku-band broadband communications payload (~50 kg, ~300 W) for low-latency user data routing.',
   },
   {
     id: 'inst_edrs_tesat',
     name: 'GEO laser relay terminal',
     path: 'telecom',
-    type: '13.5 cm LEO-to-GEO Laser Relay (1.8 Gbps)',
+    type: 'GEO Optical Laser Relay Terminal',
     referenceMission: 'Tesat LCT (EDRS)',
-    mass: 53,
-    cost: 155,
+    mass: 50, // ~50 kg
+    cost: 26.7, // ~€26.7M
     power: 160,
     dataRate: 50000,
     science: 125,
     apertureCm: 13.5,
     requiredPointingArcsec: 2.0,
     requiredCooling: 'minus_40c',
-    compatibleOrbits: ['GEO'],
+    compatibleOrbits: ['GEO', 'GSO'],
     isLaserLink: true,
+    isEstimated: true,
     trl: 9.0,
     description:
-      '1.8 Gbps (50 TB/day) optical relay terminal with Ka-band feeder, eliminating the 90-minute LEO latency delay.',
+      'Single GEO optical laser relay terminal (~50 kg, ~160 W) providing high-speed space-to-ground optical data relay.',
+  },
+  {
+    id: 'inst_lcrd',
+    name: 'Laser relay terminal pair (GEO)',
+    path: 'telecom',
+    type: 'Dual GEO Optical Laser Relay Terminals',
+    referenceMission: 'LCRD',
+    mass: 150, // ~150 kg for two
+    cost: 44.5, // ~€44.5M
+    power: 500,
+    dataRate: 1200,
+    science: 110,
+    apertureCm: 10.8,
+    requiredPointingArcsec: 2.0,
+    requiredCooling: 'minus_40c',
+    compatibleOrbits: ['GEO', 'GSO'],
+    isLaserLink: true,
+    isEstimated: true,
+    trl: 8.5,
+    description:
+      'Dual GEO optical laser relay terminal pair (~150 kg total, ~500 W) supporting simultaneous bidirectional space-to-ground optical routing.',
   },
   {
     id: 'inst_alphasat_lband',
-    name: 'Mobile service payload (L-band)',
+    name: 'Mobile service payload, L-band (GEO)',
     path: 'telecom',
-    type: '11 m Reflector + 8 DSPs (200+ Spot Beams)',
+    type: 'GEO High-Power L-Band Multi-Beam Payload',
     referenceMission: 'Alphasat',
-    mass: 1850,
-    cost: 340,
-    power: 1600,
+    mass: 1000, // ~1,000 kg
+    cost: 178, // ~€178M
+    power: 10000, // ~10 kW
     dataRate: 900,
     science: 140,
     apertureCm: 1100,
     requiredPointingArcsec: 15,
     requiredCooling: 'minus_40c',
-    compatibleOrbits: ['GEO'],
+    compatibleOrbits: ['GEO', 'GSO'],
     isLaserLink: false,
     isEstimated: true,
     trl: 9.0,
     description:
-      '11 m unfurlable L-band reflector serving 750+ user channels across 200+ spot beams directly to mobile terminals.',
+      'High-capacity GEO L-band mobile service payload (~1,000 kg, ~10 kW) serving hundreds of simultaneous user spot beams.',
   },
 ];
 
@@ -1147,9 +1251,57 @@ export const LAUNCH_VEHICLES: LaunchVehicle[] = [
 ];
 
 // =========================================================================
+// HELPER: RESOLVE EFFECTIVE DOWNLINK (GBIT/DAY) FOR A COMM COMPONENT & ORBIT
+// =========================================================================
+export function getCommDownlinkForOrbit(
+  comp: BusComponent,
+  orbit: OrbitRegime | null
+): number | null {
+  if (!comp.downlinkByRegime) {
+    return comp.dataDownlink ?? 0;
+  }
+  const orbitId = orbit?.id ?? 'LEO';
+  if (orbitId === 'L2') {
+    return comp.downlinkByRegime.l2;
+  }
+  if (orbitId === 'GSO') {
+    return (
+      comp.downlinkByRegime.gso ??
+      comp.downlinkByRegime.leoLowIncl ??
+      comp.dataDownlink ??
+      0
+    );
+  }
+  const deg = orbit?.selectedInclination?.deg ?? orbit?.inclinationDeg ?? 51.6;
+  const isHighIncl = deg >= 80;
+  return isHighIncl ? comp.downlinkByRegime.leoHighIncl : comp.downlinkByRegime.leoLowIncl;
+}
+
+// =========================================================================
 // HELPER: COMPUTE TOTALS FOR SELECTED BUS ITEMS (SUPPORTS STACKED BATTERIES)
 // =========================================================================
-export function calculateBusSelectionTotals(selectedBusIds: string[]) {
+export interface BusSelectionTotals {
+  mass: number;
+  cost: number;
+  bolPower: number;
+  powerDraw: number;
+  totalBatteryWh: number;
+  bonusDeltaV: number;
+  dataDownlink: number;
+  contactMultiplier: number;
+  degradationRate: number;
+  commCompatibleWithOrbit: boolean;
+  incompatibleCommName: string | null;
+  adcsCompatibleWithOrbit: boolean;
+  incompatibleAdcsName: string | null;
+  pointingAccuracyArcsec: number | null;
+  trlValues: number[];
+}
+
+export function calculateBusSelectionTotals(
+  selectedBusIds: string[],
+  orbit: OrbitRegime | null = null
+): BusSelectionTotals {
   const counts = new Map<string, number>();
   selectedBusIds.forEach((id) => {
     counts.set(id, (counts.get(id) ?? 0) + 1);
@@ -1164,7 +1316,14 @@ export function calculateBusSelectionTotals(selectedBusIds: string[]) {
   let dataDownlink = 0;
   let contactMultiplier = 1;
   let degradationRate = 0.025;
+  let commCompatibleWithOrbit = true;
+  let incompatibleCommName: string | null = null;
+  let adcsCompatibleWithOrbit = true;
+  let incompatibleAdcsName: string | null = null;
+  let pointingAccuracyArcsec: number | null = null;
   const trlValues: number[] = [];
+
+  const activeOrbitId = orbit?.id ?? 'LEO';
 
   counts.forEach((qty, id) => {
     const comp = BUS_COMPONENTS.find((c) => c.id === id);
@@ -1193,9 +1352,31 @@ export function calculateBusSelectionTotals(selectedBusIds: string[]) {
       powerDraw += Math.abs(comp.powerDelta) * qty;
     }
 
-    if (comp.dataDownlink) {
+    if (comp.category === 'comm') {
+      const orbitRate = getCommDownlinkForOrbit(comp, orbit);
+      if (orbitRate === null) {
+        commCompatibleWithOrbit = false;
+        incompatibleCommName = comp.name;
+      } else {
+        dataDownlink += orbitRate * qty;
+      }
+    } else if (comp.dataDownlink) {
       dataDownlink += comp.dataDownlink * qty;
     }
+
+    if (comp.category === 'adcs') {
+      if (typeof comp.pointingAccuracyArcsec === 'number') {
+        pointingAccuracyArcsec = comp.pointingAccuracyArcsec;
+      }
+      if (
+        comp.compatibleOrbitIds &&
+        !comp.compatibleOrbitIds.includes(activeOrbitId)
+      ) {
+        adcsCompatibleWithOrbit = false;
+        incompatibleAdcsName = comp.name;
+      }
+    }
+
     if (comp.contactMultiplier) {
       contactMultiplier = Math.max(contactMultiplier, comp.contactMultiplier);
     }
@@ -1206,15 +1387,20 @@ export function calculateBusSelectionTotals(selectedBusIds: string[]) {
   });
 
   return {
-    mass: Math.round(mass * 100) / 100,
+    mass: Math.round(mass * 1000) / 1000,
     cost: Math.round(cost * 100000) / 100000,
     bolPower,
     powerDraw,
     totalBatteryWh,
     bonusDeltaV,
-    dataDownlink,
+    dataDownlink: Math.round(dataDownlink * 1000) / 1000,
     contactMultiplier,
     degradationRate,
+    commCompatibleWithOrbit,
+    incompatibleCommName,
+    adcsCompatibleWithOrbit,
+    incompatibleAdcsName,
+    pointingAccuracyArcsec,
     trlValues,
   };
 }
