@@ -3,7 +3,9 @@ import {
   BusComponent,
   Instrument,
   LaunchVehicle,
+  LaunchVehicleConfiguration,
 } from '../types/mission';
+import { OrbitRegime } from './orbitData';
 
 export const OBJECTIVES: Objective[] = [
   {
@@ -288,7 +290,7 @@ export const BUS_COMPONENTS: BusComponent[] = [
     category: 'comm',
     subCategory: 'comm_transceiver',
     rfTransmitWatts: 2,
-    powerDelta: -10, // 5x of 2W RF output
+    powerDelta: -10,
     dataDownlink: 2,
     mass: 1.5,
     cost: 6,
@@ -301,7 +303,7 @@ export const BUS_COMPONENTS: BusComponent[] = [
     category: 'comm',
     subCategory: 'comm_transceiver',
     rfTransmitWatts: 10,
-    powerDelta: -50, // 5x of 10W RF output
+    powerDelta: -50,
     dataDownlink: 80,
     mass: 5,
     cost: 18,
@@ -314,7 +316,7 @@ export const BUS_COMPONENTS: BusComponent[] = [
     category: 'comm',
     subCategory: 'comm_transceiver',
     rfTransmitWatts: 35,
-    powerDelta: -175, // 5x of 35W RF output
+    powerDelta: -175,
     dataDownlink: 350,
     mass: 22,
     cost: 42,
@@ -328,7 +330,7 @@ export const BUS_COMPONENTS: BusComponent[] = [
     category: 'comm',
     subCategory: 'comm_transceiver',
     rfTransmitWatts: 80,
-    powerDelta: -400, // 5x of 80W RF output
+    powerDelta: -400,
     dataDownlink: 1800,
     mass: 48,
     cost: 78,
@@ -922,41 +924,260 @@ export const INSTRUMENTS: Instrument[] = [
   },
 ];
 
+// =========================================================================
+// LAUNCH VEHICLES & CONFIGURATIONS (FROM LAUNCHER DATA EXCEL)
+// Columns used: 400km LEO (28.5°, 51.6°, Polar 90°, SSO 98°), 35,786km GSO, L2 (C3 = 0)
+// =========================================================================
 export const LAUNCH_VEHICLES: LaunchVehicle[] = [
   {
-    id: 'lv_rideshare_electron',
-    name: 'SmallSat Launcher / Rideshare (Electron)',
-    cost: 15,
-    maxPayloadLEO: 300,
-    maxPayloadDeepSpace: 80,
-    deltaV: 9500,
+    id: 'lv_pegasus',
+    company: 'Northrop Grumman',
+    name: 'Northrop Grumman Pegasus',
+    selectedConfigId: 'pegasus_xl',
     trl: 9.0,
     description:
-      'Dedicated small launcher / rideshare ideal for 6U CubeSats (ASTERIA, BRITE, TBIRD) up to 300 kg in LEO.',
+      'Air-launched small orbital booster rated for 400 km LEO across all inclinations (up to 400 kg). Not rated for GSO or L2.',
+    configurations: [
+      {
+        id: 'pegasus_xl',
+        name: 'XL',
+        cost: 15,
+        deltaV: 9500,
+        capacities: {
+          leo28_5: 400,
+          leo51_6: 365,
+          leoPolar: 300,
+          leoSSO: 285,
+          gso: null,
+          l2: null,
+        },
+      },
+    ],
   },
   {
-    id: 'lv_medium_soyuz_vega',
-    name: 'Medium-Lift Orbital Booster (Vega-C / Soyuz)',
-    cost: 65,
-    maxPayloadLEO: 2200,
-    maxPayloadDeepSpace: 850,
-    deltaV: 11900,
-    trl: 9.0,
+    id: 'lv_falcon_9',
+    company: 'SpaceX',
+    name: 'SpaceX Falcon 9',
+    selectedConfigId: 'f9_ft_rtls',
+    trl: 9.5,
     description:
-      'Workhorse medium booster capable of lofting CoRoT-class LEO polar payloads or GTO/L2 mid-size spacecraft.',
+      'Medium-heavy two-stage launcher supporting all 400 km LEO inclinations and light L2 missions. Choose RTLS or ASDS recovery.',
+    configurations: [
+      {
+        id: 'f9_ft_rtls',
+        name: 'Full Thrust, RTLS',
+        cost: 55,
+        deltaV: 13000,
+        capacities: {
+          leo28_5: 11660,
+          leo51_6: 10860,
+          leoPolar: 9010,
+          leoSSO: 8960,
+          gso: null,
+          l2: 1770,
+        },
+      },
+      {
+        id: 'f9_ft_asds',
+        name: 'Full Thrust, ASDS',
+        cost: 67,
+        deltaV: 13100,
+        capacities: {
+          leo28_5: 15520,
+          leo51_6: 14460,
+          leoPolar: 12120,
+          leoSSO: 12130,
+          gso: null,
+          l2: 3310,
+        },
+      },
+    ],
   },
   {
-    id: 'lv_heavy_ariane_falcon',
-    name: 'Heavy-Lift Deep-Space & GTO Launcher (Ariane 6 / F9)',
-    cost: 115,
-    maxPayloadLEO: 8500,
-    maxPayloadDeepSpace: 3800,
-    deltaV: 13200,
+    id: 'lv_falcon_heavy',
+    company: 'SpaceX',
+    name: 'SpaceX Falcon Heavy',
+    selectedConfigId: 'fh_recovered',
     trl: 9.0,
     description:
-      'High-energy heavy vehicle required for Gaia (L2), EDRS-C, and multi-ton Alphasat GEO platforms.',
+      'Triple-core heavy lift vehicle dedicated to high-energy L2 (C3 = 0) deep-space injections in Recovered or Expendable configuration.',
+    configurations: [
+      {
+        id: 'fh_recovered',
+        name: 'Recovered',
+        cost: 97,
+        deltaV: 13200,
+        capacities: {
+          leo28_5: null,
+          leo51_6: null,
+          leoPolar: null,
+          leoSSO: null,
+          gso: null,
+          l2: 6690,
+        },
+      },
+      {
+        id: 'fh_expendable',
+        name: 'Expendable',
+        cost: 150,
+        deltaV: 13500,
+        capacities: {
+          leo28_5: null,
+          leo51_6: null,
+          leoPolar: null,
+          leoSSO: null,
+          gso: null,
+          l2: 15010,
+        },
+      },
+    ],
+  },
+  {
+    id: 'lv_vulcan',
+    company: 'United Launch Alliance',
+    name: 'ULA Vulcan Centaur',
+    selectedConfigId: 'vulcan_vc2',
+    trl: 8.5,
+    description:
+      'Modular heavy booster scalable from 0 to 6 solid rocket boosters (VC0–VC6) for 28.5°/51.6° LEO, GSO transfer, and L2.',
+    configurations: [
+      {
+        id: 'vulcan_vc0',
+        name: 'VC0 (0 SRBs)',
+        cost: 85,
+        deltaV: 13000,
+        capacities: {
+          leo28_5: 9470,
+          leo51_6: 8720,
+          leoPolar: null,
+          leoSSO: null,
+          gso: null,
+          l2: 2100,
+        },
+      },
+      {
+        id: 'vulcan_vc2',
+        name: 'VC2 (2 SRBs)',
+        cost: 105,
+        deltaV: 13100,
+        capacities: {
+          leo28_5: 16810,
+          leo51_6: 15660,
+          leoPolar: null,
+          leoSSO: null,
+          gso: 7580,
+          l2: 5920,
+        },
+      },
+      {
+        id: 'vulcan_vc4',
+        name: 'VC4 (4 SRBs)',
+        cost: 125,
+        deltaV: 13200,
+        capacities: {
+          leo28_5: 22310,
+          leo51_6: 20800,
+          leoPolar: null,
+          leoSSO: null,
+          gso: 10790,
+          l2: 8550,
+        },
+      },
+      {
+        id: 'vulcan_vc6',
+        name: 'VC6 (6 SRBs)',
+        cost: 145,
+        deltaV: 13400,
+        capacities: {
+          leo28_5: 26450,
+          leo51_6: 24730,
+          leoPolar: null,
+          leoSSO: null,
+          gso: 13630,
+          l2: 10850,
+        },
+      },
+    ],
+  },
+  {
+    id: 'lv_new_glenn',
+    company: 'Blue Origin',
+    name: 'Blue Origin New Glenn',
+    selectedConfigId: 'new_glenn_std',
+    trl: 8.5,
+    description:
+      '7-meter heavy-lift orbital rocket offering massive 400 km (28.5°/51.6°) LEO, GSO transfer (12,085 kg), and L2 (7,180 kg) lift.',
+    configurations: [
+      {
+        id: 'new_glenn_std',
+        name: 'Standard (Reusable Booster)',
+        cost: 110,
+        deltaV: 13200,
+        capacities: {
+          leo28_5: 36290,
+          leo51_6: 34110,
+          leoPolar: null,
+          leoSSO: null,
+          gso: 12085,
+          l2: 7180,
+        },
+      },
+    ],
   },
 ];
+
+export function getActiveLVConfig(lv: LaunchVehicle | null): LaunchVehicleConfiguration | null {
+  if (!lv || !lv.configurations?.length) return null;
+  return (
+    lv.configurations.find((c) => c.id === lv.selectedConfigId) ??
+    lv.configurations[0]
+  );
+}
+
+export function getOrbitTargetLabel(
+  orbit: OrbitRegime | null,
+  fallbackObjective?: Objective
+): string {
+  if (!orbit) {
+    return fallbackObjective?.orbitType === 'GEO' ? 'GSO (35,786 KM)' : 'LEO 400 KM (51.6°)';
+  }
+  if (orbit.id === 'LEO') {
+    const deg = orbit.selectedInclination?.deg ?? orbit.inclinationDeg ?? 51.6;
+    if (deg === 90) return 'LEO 400 KM (90° POLAR)';
+    if (deg === 98) return 'LEO 400 KM (98° SSO)';
+    return `LEO 400 KM (${deg}°)`;
+  }
+  if (orbit.id === 'GSO') return 'GSO (35,786 KM)';
+  return 'L2 POINT (C3 = 0)';
+}
+
+export function getLauncherMaxPayload(
+  lv: LaunchVehicle | null,
+  orbit: OrbitRegime | null,
+  fallbackObjective?: Objective
+): number | null {
+  const cfg = getActiveLVConfig(lv);
+  if (!cfg) return null;
+
+  const orbitId =
+    orbit?.id ?? (fallbackObjective?.orbitType === 'GEO' ? 'GSO' : 'LEO');
+
+  if (orbitId === 'GSO') {
+    return cfg.capacities.gso;
+  }
+  if (orbitId === 'L2') {
+    return cfg.capacities.l2;
+  }
+
+  // 400 km LEO — match selected inclination degree
+  const deg = orbit?.selectedInclination?.deg ?? orbit?.inclinationDeg ?? 51.6;
+  if (Math.abs(deg - 28.5) < 0.5) return cfg.capacities.leo28_5;
+  if (Math.abs(deg - 51.6) < 0.5) return cfg.capacities.leo51_6;
+  if (Math.abs(deg - 90) < 0.5) return cfg.capacities.leoPolar;
+  if (Math.abs(deg - 98) < 0.5) return cfg.capacities.leoSSO;
+
+  return cfg.capacities.leo51_6;
+}
 
 export type DifficultyLevel = 'easy' | 'medium' | 'advanced' | 'expert';
 
@@ -1014,7 +1235,6 @@ export const DIFFICULTY_LEVELS: DifficultyConfig[] = [
   },
 ];
 
-// Reference mission comparison table for the post-simulation report screen
 export const REFERENCE_MISSIONS = {
   star_obs: [
     { name: 'ASTERIA', class: 'CubeSat (6U)', orbit: 'LEO', massKg: 12, powerW: 40, dataGbitDay: 1.2 },
