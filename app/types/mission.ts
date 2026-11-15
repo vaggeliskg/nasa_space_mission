@@ -36,20 +36,29 @@ export interface BusComponent {
   fits?: string;
   category: 'power' | 'comm' | 'propulsion' | 'adcs' | 'systems';
   subCategory: BusSubCategory;
-  mass: number;
-  extraUnitMass?: number;
-  cost: number; // €M
-  extraUnitCost?: number;
-  priceEur?: number;
-  extraUnitPriceEur?: number;
+  mass: number; // First unit mass (kg)
+  extraUnitMass?: number; // Additional stacked unit mass (kg)
+  maxSpacecraftMassKg?: number; // Structure max allowed spacecraft mass (kg)
+  sizeClass?: string; // e.g., '3U CubeSat', 'Micro', 'Large'
+  cost: number; // First unit cost (€M)
+  extraUnitCost?: number; // Additional stacked unit cost (€M)
+  priceEur?: number; // Exact EUR unit price for display
+  extraUnitPriceEur?: number; // Exact EUR extra pack price for display
   maxUnits?: number;
   powerDelta: number; // Positive = generated (W), Negative = drawn (W DC)
   rfTransmitWatts?: number;
   batteryCapacityWh?: number;
   ispSeconds?: number;
   deltaVAdded?: number;
-  degradationRate?: number;
-  dataDownlink?: number;
+  degradationRate?: number; // Annual panel degradation rate (e.g., 0.04 = 4%/yr)
+  doseMultiplier?: number; // Radiation dose multiplier (x5, x2.5, x1, x0.7)
+  thermalMassMultiplier?: number; // Thermal mass multiplier (x1, x1.05, x2, x3)
+  thermalPercentOfTotal?: number; // Alternative thermal mass % (2, 3, 5, 8)
+  thermalPriceMultiplier?: number; // Price multiplier relative to H1 (1, 1.5, 3, 6)
+  radiationRatingKrad?: number; // OBC radiation tolerance (krad)
+  storageGb?: number; // OBC onboard storage (GB)
+  eolRule?: 'low_leo' | 'leo_800' | 'attitude_drag' | 'propulsive' | 'external_leo';
+  dataDownlink?: number; // Default Gbit/day
   downlinkByRegime?: {
     leoHighIncl: number | null;
     leoLowIncl: number | null;
@@ -85,8 +94,8 @@ export interface Instrument {
   cost: number; // €M
   priceEur?: number;
   power: number; // W
-  dataRate: number; // Internal reference only (does not interfere with HUD datalink)
-  science: number; // Internal reference only (does not interfere with HUD science points)
+  dataRate: number;
+  science: number;
   apertureCm?: number;
   simultaneousStars?: number;
   requiredPointingArcsec?: number;
