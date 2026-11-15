@@ -191,10 +191,10 @@ export const BUS_COMPONENTS: BusComponent[] = [
     linkType: 'Radio',
     groundNetwork: 'University station, mid-latitude',
     maxDataRateLabel: '9.6 kbit/s',
-    mass: 0.075, // 75 g
-    cost: 0.0085, // ~€8,500
+    mass: 0.075,
+    cost: 0.0085,
     priceEur: 8500,
-    powerDelta: -4, // under 4 W DC
+    powerDelta: -4,
     dataDownlink: 0.016,
     downlinkByRegime: {
       leoHighIncl: 0.016,
@@ -214,10 +214,10 @@ export const BUS_COMPONENTS: BusComponent[] = [
     linkType: 'Radio',
     groundNetwork: 'Commercial network with polar station',
     maxDataRateLabel: '2 Mbit/s',
-    mass: 0.36, // 360 g
-    cost: 0.0125, // ~€12,500
+    mass: 0.36,
+    cost: 0.0125,
     priceEur: 12500,
-    powerDelta: -12, // 12 W DC
+    powerDelta: -12,
     dataDownlink: 12,
     downlinkByRegime: {
       leoHighIncl: 12,
@@ -237,10 +237,10 @@ export const BUS_COMPONENTS: BusComponent[] = [
     linkType: 'Radio',
     groundNetwork: 'Commercial network with polar station',
     maxDataRateLabel: '140 Mbit/s',
-    mass: 0.3, // ~300 g
-    cost: 0.0287, // ~€28,700
+    mass: 0.3,
+    cost: 0.0287,
     priceEur: 28700,
-    powerDelta: -12, // 12 W DC
+    powerDelta: -12,
     dataDownlink: 136,
     downlinkByRegime: {
       leoHighIncl: 136,
@@ -260,10 +260,10 @@ export const BUS_COMPONENTS: BusComponent[] = [
     linkType: 'Laser (infrared light)',
     groundNetwork: 'Optical ground station',
     maxDataRateLabel: '100 Mbit/s',
-    mass: 0.38, // ~360 to 400 g
-    cost: 0.089, // ~€89,000
+    mass: 0.38,
+    cost: 0.089,
     priceEur: 89000,
-    powerDelta: -8.25, // 8 to 8.5 W DC
+    powerDelta: -8.25,
     dataDownlink: 168,
     downlinkByRegime: {
       leoHighIncl: 168,
@@ -284,10 +284,10 @@ export const BUS_COMPONENTS: BusComponent[] = [
     linkType: 'Radio',
     groundNetwork: 'Deep Space Network',
     maxDataRateLabel: '256 kbit/s',
-    mass: 1.1, // 1.1 kg
-    cost: 0.356, // ~€356,000
+    mass: 1.1,
+    cost: 0.356,
     priceEur: 356000,
-    powerDelta: -35, // 35 W DC
+    powerDelta: -35,
     dataDownlink: 6.9,
     downlinkByRegime: {
       leoHighIncl: null,
@@ -307,10 +307,10 @@ export const BUS_COMPONENTS: BusComponent[] = [
     linkType: 'Radio',
     groundNetwork: 'Deep Space Network',
     maxDataRateLabel: 'Up to 300 Msymbols/s',
-    mass: 3.0, // 3.0 kg
-    cost: 0.89, // ~€890,000
+    mass: 3.0,
+    cost: 0.89,
     priceEur: 890000,
-    powerDelta: -30, // 30 W DC
+    powerDelta: -30,
     dataDownlink: 130,
     downlinkByRegime: {
       leoHighIncl: null,
@@ -329,10 +329,10 @@ export const BUS_COMPONENTS: BusComponent[] = [
     subCategory: 'comm',
     linkType: 'Radio (TT&C)',
     groundNetwork: 'University station, mid-latitude',
-    mass: 0.075, // 75 g
-    cost: 0.0085, // ~€8,500
+    mass: 0.075,
+    cost: 0.0085,
     priceEur: 8500,
-    powerDelta: -4, // under 4 W
+    powerDelta: -4,
     dataDownlink: 0.016,
     trl: 9.5,
     description:
@@ -346,10 +346,10 @@ export const BUS_COMPONENTS: BusComponent[] = [
     subCategory: 'comm',
     linkType: 'Radio (TT&C)',
     groundNetwork: 'Commercial network with polar station',
-    mass: 0.36, // 360 g
-    cost: 0.0125, // ~€12,500
+    mass: 0.36,
+    cost: 0.0125,
     priceEur: 12500,
-    powerDelta: -12, // 12 W
+    powerDelta: -12,
     dataDownlink: 12,
     trl: 9.5,
     description:
@@ -363,10 +363,10 @@ export const BUS_COMPONENTS: BusComponent[] = [
     subCategory: 'comm',
     linkType: 'Redundant Radio (TT&C)',
     groundNetwork: 'Commercial network with polar station',
-    mass: 0.72, // 720 g (2 x C2)
-    cost: 0.0249, // ~€24,900
+    mass: 0.72,
+    cost: 0.0249,
     priceEur: 24900,
-    powerDelta: -12, // 12 W (one transmits at a time)
+    powerDelta: -12,
     dataDownlink: 12,
     hasRedundancy: true,
     trl: 9.5,
@@ -374,7 +374,7 @@ export const BUS_COMPONENTS: BusComponent[] = [
       'Dual redundant S-band transceivers (2× C2, one transmits at a time — 720 g total, 12 W DC active draw).',
   },
 
-  /// =========================================================================
+  // =========================================================================
   // HP-03: PROPULSION — 3.1 PROPULSION SYSTEM (5 CARDS: P0–P4)
   // =========================================================================
   {
@@ -400,7 +400,7 @@ export const BUS_COMPONENTS: BusComponent[] = [
     category: 'propulsion',
     subCategory: 'propulsion',
     mass: 1.5,
-    cost: 0.0445, // ~€44,500
+    cost: 0.0445,
     priceEur: 44500,
     powerDelta: -5,
     ispSeconds: 35,
@@ -416,7 +416,7 @@ export const BUS_COMPONENTS: BusComponent[] = [
     category: 'propulsion',
     subCategory: 'propulsion',
     mass: 12,
-    cost: 0.2225, // ~€222,500
+    cost: 0.2225,
     priceEur: 222500,
     powerDelta: -15,
     ispSeconds: 235,
@@ -432,7 +432,7 @@ export const BUS_COMPONENTS: BusComponent[] = [
     category: 'propulsion',
     subCategory: 'propulsion',
     mass: 25,
-    cost: 0.445, // ~€445,000
+    cost: 0.445,
     priceEur: 445000,
     powerDelta: -250,
     ispSeconds: 1390,
@@ -448,7 +448,7 @@ export const BUS_COMPONENTS: BusComponent[] = [
     category: 'propulsion',
     subCategory: 'propulsion',
     mass: 45,
-    cost: 1.78, // ~€1,780,000
+    cost: 1.78,
     priceEur: 1780000,
     powerDelta: -600,
     ispSeconds: 1640,
@@ -468,12 +468,12 @@ export const BUS_COMPONENTS: BusComponent[] = [
     fits: 'CubeSat',
     category: 'adcs',
     subCategory: 'adcs',
-    mass: 0.1, // ~0.05 to 0.16 kg
-    cost: 0.0178, // ~€17,800
+    mass: 0.1,
+    cost: 0.0178,
     priceEur: 17800,
-    powerDelta: -2, // ~1 to 2.3 W
-    pointingAccuracyArcsec: 18000, // ~5 deg (18,000 arcsec)
-    pointingKnowledgeArcsec: 360, // ~0.1 deg (360 arcsec)
+    powerDelta: -2,
+    pointingAccuracyArcsec: 18000,
+    pointingKnowledgeArcsec: 360,
     wheelUnloading: 'No wheels',
     compatibleOrbitIds: ['LEO'],
     trl: 9.5,
@@ -487,11 +487,11 @@ export const BUS_COMPONENTS: BusComponent[] = [
     category: 'adcs',
     subCategory: 'adcs',
     mass: 1.23,
-    cost: 0.089, // ~€89,000
+    cost: 0.089,
     priceEur: 89000,
-    powerDelta: -4, // ~4 W
-    pointingAccuracyArcsec: 11, // 0.003 deg (~11 arcsec)
-    pointingKnowledgeArcsec: 6, // ~6 arcsec
+    powerDelta: -4,
+    pointingAccuracyArcsec: 11,
+    pointingKnowledgeArcsec: 6,
     wheelUnloading: 'Magnetic torquers',
     compatibleOrbitIds: ['LEO'],
     trl: 9.0,
@@ -504,12 +504,12 @@ export const BUS_COMPONENTS: BusComponent[] = [
     fits: 'micro to mini',
     category: 'adcs',
     subCategory: 'adcs',
-    mass: 7, // ~7 kg
-    cost: 0.267, // ~€267,000
+    mass: 7,
+    cost: 0.267,
     priceEur: 267000,
-    powerDelta: -15, // ~15 W (up to ~170 W while turning)
-    pointingAccuracyArcsec: 7, // 0.002 deg (~7 arcsec)
-    pointingKnowledgeArcsec: 6, // ~6 arcsec
+    powerDelta: -15,
+    pointingAccuracyArcsec: 7,
+    pointingKnowledgeArcsec: 6,
     wheelUnloading: 'Magnetic torquers',
     compatibleOrbitIds: ['LEO'],
     hasRedundancy: true,
@@ -523,12 +523,12 @@ export const BUS_COMPONENTS: BusComponent[] = [
     fits: 'medium to large',
     category: 'adcs',
     subCategory: 'adcs',
-    mass: 17, // ~17 kg
-    cost: 0.89, // ~€890,000
+    mass: 17,
+    cost: 0.89,
     priceEur: 890000,
-    powerDelta: -30, // ~30 W (up to ~440 W while turning)
-    pointingAccuracyArcsec: 1, // ~1 arcsec
-    pointingKnowledgeArcsec: 3, // 3 arcsec
+    powerDelta: -30,
+    pointingAccuracyArcsec: 1,
+    pointingKnowledgeArcsec: 3,
     wheelUnloading: 'Magnetic torquers',
     compatibleOrbitIds: ['LEO'],
     hasRedundancy: true,
@@ -542,12 +542,12 @@ export const BUS_COMPONENTS: BusComponent[] = [
     fits: 'any (CubeSat & large versions)',
     category: 'adcs',
     subCategory: 'adcs',
-    mass: 20, // ~20 kg (CubeSat version ~1.9 kg)
-    cost: 1.068, // ~€1,068,000 (CubeSat version ~€178,000)
+    mass: 20,
+    cost: 1.068,
     priceEur: 1068000,
-    powerDelta: -30, // as A3 + ~20 W while firing
-    pointingAccuracyArcsec: 1, // ~1 arcsec (CubeSat version ~11 arcsec)
-    pointingKnowledgeArcsec: 3, // 3 arcsec (CubeSat version ~6 arcsec)
+    powerDelta: -30,
+    pointingAccuracyArcsec: 1,
+    pointingKnowledgeArcsec: 3,
     wheelUnloading: 'Thrusters (cold-gas)',
     compatibleOrbitIds: ['LEO', 'GSO', 'L2'],
     hasRedundancy: true,
@@ -557,266 +557,397 @@ export const BUS_COMPONENTS: BusComponent[] = [
   },
 
   // =========================================================================
-  // HP-05: BUS & SYSTEMS — 5.1 STRUCTURE (4 CARDS)
+  // HP-05: BUS & SYSTEMS — 5.1 STRUCTURE (7 CARDS: S1–S7)
   // =========================================================================
   {
-    id: 'struct_6u_alu',
-    name: '6U Modular Aluminum CubeSat Frame',
+    id: 'struct_s1_3u',
+    name: 'S1',
+    sizeClass: '3U CubeSat',
+    fits: '3U CubeSat (Max mass: 6 kg)',
     category: 'systems',
     subCategory: 'structure',
-    mass: 3,
-    cost: 5,
+    mass: 0,
+    maxSpacecraftMassKg: 6,
+    cost: 0.00445, // ~€4,450
+    priceEur: 4450,
     powerDelta: 0,
     trl: 9.5,
-    description: 'Lightweight 6061-T6 anodized frame supporting up to 25 kg total wet mass.',
+    description: '3U CubeSat chassis.',
   },
   {
-    id: 'struct_espa_ring',
-    name: 'ESPA-Class Honeycomb Aluminum Bus',
+    id: 'struct_s2_6u',
+    name: 'S2',
+    sizeClass: '6U CubeSat',
+    fits: '6U CubeSat (Max mass: 12 kg)',
     category: 'systems',
     subCategory: 'structure',
-    mass: 45,
-    cost: 22,
-    powerDelta: 0,
-    trl: 9.0,
-    description: 'Standard small-to-medium satellite octagonal core with high launch stiffness.',
-  },
-  {
-    id: 'struct_cfrp_optical',
-    name: 'Zero-CTE Carbon-Fiber (CFRP) Optical Bench',
-    category: 'systems',
-    subCategory: 'structure',
-    mass: 75,
-    cost: 55,
-    powerDelta: 0,
-    trl: 9.0,
-    description: 'Thermally invariant graphite-epoxy truss preventing mirror defocus across ΔT.',
-  },
-  {
-    id: 'struct_heavy_geo_cylinder',
-    name: 'Heavy Central Thrust Cylinder (Multi-Ton GEO)',
-    category: 'systems',
-    subCategory: 'structure',
-    mass: 190,
-    cost: 80,
+    mass: 0,
+    maxSpacecraftMassKg: 12,
+    cost: 0.0089, // ~€8,900
+    priceEur: 8900,
     powerDelta: 0,
     trl: 9.5,
-    description: 'Reinforced composite/titanium central tube built for multi-ton GEO platforms.',
+    description: '6U CubeSat chassis.',
+  },
+  {
+    id: 'struct_s3_12u',
+    name: 'S3',
+    sizeClass: '12U CubeSat',
+    fits: '12U CubeSat (Max mass: 24 kg)',
+    category: 'systems',
+    subCategory: 'structure',
+    mass: 0,
+    maxSpacecraftMassKg: 24,
+    cost: 0.0178, // ~€17,800
+    priceEur: 17800,
+    powerDelta: 0,
+    trl: 9.5,
+    description: '12U CubeSat chassis.',
+  },
+  {
+    id: 'struct_s4_micro',
+    name: 'S4',
+    sizeClass: 'Micro',
+    fits: 'Micro (Max mass: 100 kg)',
+    category: 'systems',
+    subCategory: 'structure',
+    mass: 0,
+    maxSpacecraftMassKg: 100,
+    cost: 0.178, // ~€178,000
+    priceEur: 178000,
+    powerDelta: 0,
+    trl: 9.0,
+    description: 'Microsatellite bus structure.',
+  },
+  {
+    id: 'struct_s5_mini',
+    name: 'S5',
+    sizeClass: 'Mini',
+    fits: 'Mini (Max mass: 500 kg)',
+    category: 'systems',
+    subCategory: 'structure',
+    mass: 0,
+    maxSpacecraftMassKg: 500,
+    cost: 0.89, // ~€890,000
+    priceEur: 890000,
+    powerDelta: 0,
+    trl: 9.0,
+    description: 'Minisatellite bus structure.',
+  },
+  {
+    id: 'struct_s6_medium',
+    name: 'S6',
+    sizeClass: 'Medium',
+    fits: 'Medium (Max mass: 1,000 kg)',
+    category: 'systems',
+    subCategory: 'structure',
+    mass: 0,
+    maxSpacecraftMassKg: 1000,
+    cost: 2.67, // ~€2,670,000
+    priceEur: 2670000,
+    powerDelta: 0,
+    trl: 9.0,
+    description: 'Medium satellite primary structure.',
+  },
+  {
+    id: 'struct_s7_large',
+    name: 'S7',
+    sizeClass: 'Large',
+    fits: 'Large (Max mass: 3,000 kg)',
+    category: 'systems',
+    subCategory: 'structure',
+    mass: 0,
+    maxSpacecraftMassKg: 3000,
+    cost: 8.9, // ~€8,900,000
+    priceEur: 8900000,
+    powerDelta: 0,
+    trl: 9.5,
+    description: 'Large heavy spacecraft primary structure.',
+  },
+  
+  // =========================================================================
+  // HP-05: BUS & SYSTEMS — 5.2 RADIATION SHIELDING (4 CARDS: R1–R4)
+  // =========================================================================
+  {
+    id: 'rad_r1_walls_only',
+    name: 'R1. Walls only',
+    category: 'systems',
+    subCategory: 'radiation',
+    mass: 0, // 0 kg extra mass per m2 of electronics box
+    cost: 0,
+    priceEur: 0,
+    powerDelta: 0,
+    radiationShieldingMm: 2, // ~2 mm (0.54 g/cm2)
+    doseMultiplier: 5, // x5 (estimate)
+    degradationRate: 0.04, // ~4% panel degradation/yr
+    trl: 9.5,
+    description:
+      'No extra shielding; the structure alone (~2 mm Al eq., 0.54 g/cm²). Dose multiplier: ×5, extra box mass: 0 kg, panel degradation: ~4%/yr.',
+  },
+  {
+    id: 'rad_r2_light',
+    name: 'R2. Light',
+    category: 'systems',
+    subCategory: 'radiation',
+    mass: 2.75, // ~2.75 kg extra mass per m2 of electronics box
+    cost: 0.015,
+    priceEur: 15000,
+    powerDelta: 0,
+    radiationShieldingMm: 3, // ~3 mm (0.81 g/cm2)
+    doseMultiplier: 2.5, // x2.5 (estimate)
+    degradationRate: 0.03, // ~3% panel degradation/yr
+    trl: 9.0,
+    description:
+      'Thin extra plates around the electronics (~3 mm Al eq., 0.81 g/cm²). Dose multiplier: ×2.5, extra box mass: ~2.75 kg, panel degradation: ~3%/yr.',
+  },
+  {
+    id: 'rad_r3_standard',
+    name: 'R3. Standard',
+    category: 'systems',
+    subCategory: 'radiation',
+    mass: 8.15, // ~8.15 kg extra mass per m2 of electronics box
+    cost: 0.045,
+    priceEur: 45000,
+    powerDelta: 0,
+    radiationShieldingMm: 5, // 5 mm (1.35 g/cm2)
+    doseMultiplier: 1, // x1 (orbit table value)
+    degradationRate: 0.02, // ~2% panel degradation/yr
+    trl: 9.0,
+    description:
+      'The reference shielding level (5 mm Al eq., 1.35 g/cm²). Dose multiplier: ×1, extra box mass: ~8.15 kg, panel degradation: ~2%/yr.',
+  },
+  {
+    id: 'rad_r4_heavy',
+    name: 'R4. Heavy',
+    category: 'systems',
+    subCategory: 'radiation',
+    mass: 21.65, // ~21.65 kg extra mass per m2 of electronics box
+    cost: 0.12,
+    priceEur: 120000,
+    powerDelta: 0,
+    radiationShieldingMm: 10, // ~10 mm (2.7 g/cm2)
+    doseMultiplier: 0.7, // x0.7 (estimate)
+    degradationRate: 0.015, // ~1.5% panel degradation/yr
+    trl: 9.0,
+    description:
+      'Thick shielding for harsh orbits (~10 mm Al eq., 2.7 g/cm²). Dose multiplier: ×0.7, extra box mass: ~21.65 kg, panel degradation: ~1.5%/yr.',
   },
 
   // =========================================================================
-  // HP-05: BUS & SYSTEMS — 5.2 RADIATION SHIELDING (4 CARDS)
+  // HP-05: BUS & SYSTEMS — 5.3 THERMAL CONTROL (4 CARDS: H1–H4)
   // =========================================================================
   {
-    id: 'rad_2mm_thinskin',
-    name: '2mm Thin-Skin Chassis (0.54 g/cm²)',
-    category: 'systems',
-    subCategory: 'radiation',
-    mass: 2,
-    cost: 3,
-    powerDelta: 0,
-    radiationShieldingMm: 2,
-    trl: 9.0,
-    riskPenaltyPercent: 14,
-    riskNote: 'Minimal shielding; vulnerable to Van Allen belts, GSO, and solar flare SEUs.',
-    description: 'Basic LEO protection against low-energy trapped protons.',
-  },
-  {
-    id: 'rad_6mm_graded_z',
-    name: '6mm Graded-Z Aluminum-Tantalum Vault',
-    category: 'systems',
-    subCategory: 'radiation',
-    mass: 14,
-    cost: 16,
-    powerDelta: 0,
-    radiationShieldingMm: 6,
-    trl: 9.0,
-    description: 'Spot-shielded avionics enclosure suitable for polar LEO and South Atlantic Anomaly.',
-  },
-  {
-    id: 'rad_10mm_geo_armor',
-    name: '10mm High-Density GEO / L2 Armor (2.7 g/cm²)',
-    category: 'systems',
-    subCategory: 'radiation',
-    mass: 32,
-    cost: 34,
-    powerDelta: 0,
-    radiationShieldingMm: 10,
-    trl: 9.0,
-    description: 'Full 5–10 year total ionizing dose (TID) protection for GEO & L2 missions.',
-  },
-  {
-    id: 'rad_16mm_deep_vault',
-    name: '16mm Polyethylene-Tantalum Deep-Space Vault',
-    category: 'systems',
-    subCategory: 'radiation',
-    mass: 58,
-    cost: 60,
-    powerDelta: 0,
-    radiationShieldingMm: 16,
-    trl: 8.5,
-    description: 'Hydrogen-rich + high-Z shield blocking galactic cosmic rays & secondary Bremsstrahlung.',
-  },
-
-  // =========================================================================
-  // HP-05: BUS & SYSTEMS — 5.3 THERMAL CONTROL (4 CARDS)
-  // =========================================================================
-  {
-    id: 'therm_mli_passive',
-    name: 'MLI Blankets + Passive Louvers (±0.01 K Iso)',
+    id: 'therm_h1_passive',
+    name: 'H1. Passive',
     category: 'systems',
     subCategory: 'thermal',
-    mass: 2,
-    cost: 4,
-    powerDelta: -4,
+    mass: 0,
+    cost: 0.005, // Scales from €5,000 (CubeSat) to €500,000 (large) based on structure
+    priceEur: 5000,
+    powerDelta: 0,
+    thermalPriceMultiplier: 1,
     coolingProvided: 'thermal_iso',
     trl: 9.5,
-    description: 'Multi-layer Kapton insulation & survival heaters for LEO smallsats.',
+    description:
+      'Coatings and insulation blankets. Price scales from ~€5,000 (CubeSat) to ~€500,000 (large).',
   },
   {
-    id: 'therm_heatpipe_minus40',
-    name: 'Ammonia Heat Pipes + Shadow Radiator (-40°C)',
+    id: 'therm_h2_passive_heaters',
+    name: 'H2. Passive + heaters',
     category: 'systems',
     subCategory: 'thermal',
-    mass: 16,
-    cost: 18,
-    powerDelta: -18,
+    mass: 0,
+    cost: 0.0075, // H1 x 1.5
+    priceEur: 7500,
+    powerDelta: -5,
+    thermalPriceMultiplier: 1.5,
+    coolingProvided: 'thermal_iso',
+    trl: 9.5,
+    description:
+      'H1 + electric heaters for cold phases and eclipses. Price: H1 × 1.5.',
+  },
+  {
+    id: 'therm_h3_radiators_heaters',
+    name: 'H3. Radiators + heaters',
+    category: 'systems',
+    subCategory: 'thermal',
+    mass: 0,
+    cost: 0.015, // H1 x 3
+    priceEur: 15000,
+    powerDelta: -10,
+    thermalPriceMultiplier: 3,
     coolingProvided: 'minus_40c',
     trl: 9.0,
-    description: 'Heat-pipe loop maintaining optical/RF bays at -40°C.',
+    description:
+      'H2 + radiator panels that release heat to space. Price: H1 × 3.',
   },
   {
-    id: 'therm_cryo_minus85',
-    name: 'Deep-Space V-Groove Radiator (-85°C)',
+    id: 'therm_h4_detector_cooling',
+    name: 'H4. Detector cooling',
     category: 'systems',
     subCategory: 'thermal',
-    mass: 35,
-    cost: 42,
+    mass: 0,
+    cost: 0.03, // H1 x 6
+    priceEur: 30000,
     powerDelta: -35,
-    coolingProvided: 'minus_85c',
-    trl: 8.5,
-    description: 'Passive radiative cooler eliminating CCD dark current at -85°C.',
-  },
-  {
-    id: 'therm_sunshield_160k',
-    name: 'Deployable Cryo-Sunshield + Pulse-Tube (160 K)',
-    category: 'systems',
-    subCategory: 'thermal',
-    mass: 75,
-    cost: 85,
-    powerDelta: -95,
+    thermalPriceMultiplier: 6,
     coolingProvided: 'cryo_160k',
-    trl: 8.5,
-    description: 'Multi-layer sunshield & active cryocooler holding 160 K (±50 µK).',
+    trl: 9.0,
+    description:
+      'H3 + cooling for the instrument’s detector (heat pipes or a cryocooler). Price: H1 × 6.',
   },
 
   // =========================================================================
-  // HP-05: BUS & SYSTEMS — 5.4 ON-BOARD COMPUTER (OBC) (4 CARDS)
+  // HP-05: BUS & SYSTEMS — 5.4 ON-BOARD COMPUTER (OBC) (4 CARDS: O1–O4)
   // =========================================================================
   {
-    id: 'obc_cots_arm',
-    name: 'COTS Dual-Core ARM Flight Computer',
+    id: 'obc_o1_basic_cubesat',
+    name: 'O1. Basic CubeSat',
+    fits: 'short LEO missions',
     category: 'systems',
     subCategory: 'obc',
-    mass: 0.8,
-    cost: 4,
-    powerDelta: -5,
+    mass: 0.1,
+    cost: 0.009, // ~€9,000
+    priceEur: 9000,
+    powerDelta: -1, // ~1 W
+    radiationRatingKrad: 20, // 20 krad
+    storageGb: 2, // ~2 GB
     hasRedundancy: false,
-    trl: 8.5,
-    riskPenaltyPercent: 12,
-    riskNote: 'Single-string COTS processor susceptible to latch-ups without triple voting.',
-    description: 'High-speed CubeSat OBC with software watchdog; best for short LEO missions.',
+    trl: 9.0,
+    description:
+      'Cheap commercial board — 20 krad rating, ~1 W power, ~2 GB storage. Good for short LEO missions.',
   },
   {
-    id: 'obc_leon3_ft',
-    name: 'Rad-Tolerant LEON3-FT SpaceWire OBC',
+    id: 'obc_o2_tolerant_cubesat',
+    name: 'O2. Tolerant CubeSat',
+    fits: 'longer LEO missions',
     category: 'systems',
     subCategory: 'obc',
-    mass: 4,
-    cost: 16,
-    powerDelta: -12,
+    mass: 0.15,
+    cost: 0.018, // ~€18,000
+    priceEur: 18000,
+    powerDelta: -2, // ~2 W
+    radiationRatingKrad: 40, // 40 krad
+    storageGb: 8, // ~8 GB
+    hasRedundancy: false,
+    trl: 9.0,
+    description:
+      'Commercial parts tested for radiation — 40 krad rating, ~2 W power, ~8 GB storage. Good for longer LEO missions.',
+  },
+  {
+    id: 'obc_o3_selectively_hardened',
+    name: 'O3. Selectively hardened',
+    fits: 'big-data missions',
+    category: 'systems',
+    subCategory: 'obc',
+    mass: 1.2,
+    cost: 0.18, // ~€180,000
+    priceEur: 180000,
+    powerDelta: -9, // 8 to 10 W
+    radiationRatingKrad: 50, // ~50 krad
+    storageGb: 32, // ~32 GB
     hasRedundancy: true,
     trl: 9.0,
-    description: 'Fault-tolerant SPARC processor with EDAC-protected memory.',
+    description:
+      'Only the critical parts are space-grade; large storage — ~50 krad rating, 8–10 W power, ~32 GB storage. Good for big-data missions.',
   },
   {
-    id: 'obc_rad750_dual',
-    name: 'Dual-Redundant RAD750 Cold-Spare Avionics',
+    id: 'obc_o4_edge_computing',
+    name: 'O4. Edge computing',
+    fits: 'processing data in orbit',
     category: 'systems',
     subCategory: 'obc',
-    mass: 11,
-    cost: 38,
-    powerDelta: -24,
-    hasRedundancy: true,
-    trl: 9.5,
-    description: 'Deep-space workhorse flight computer with hardware triple-modular redundancy.',
-  },
-  {
-    id: 'obc_vpu_onboard_ai',
-    name: 'Rad-Hard DPU + 2TB On-Board Science Processor',
-    category: 'systems',
-    subCategory: 'obc',
-    mass: 18,
-    cost: 58,
-    powerDelta: -42,
+    mass: 1.8,
+    cost: 0.27, // ~€270,000
+    priceEur: 270000,
+    powerDelta: -15, // ~15 W
+    radiationRatingKrad: 30, // ~30 krad
+    storageGb: 256, // ~256 GB
     hasRedundancy: true,
     trl: 8.5,
-    description: 'Performs real-time star centroiding, packetization, and lossless compression on orbit.',
+    description:
+      'Very powerful processing in orbit, power-hungry — ~30 krad rating, ~15 W power, ~256 GB storage. Good for processing data in orbit.',
   },
 
   // =========================================================================
-  // HP-05: BUS & SYSTEMS — 5.5 END OF LIFE (EOL) DISPOSAL (4 CARDS)
+  // HP-05: BUS & SYSTEMS — 5.5 END OF LIFE (EOL) DISPOSAL (5 CARDS: E1–E5)
   // =========================================================================
   {
-    id: 'eol_natural_decay',
-    name: 'Unassisted Atmospheric Decay (< 420 km LEO)',
+    id: 'eol_e1_natural_decay',
+    name: 'E1. Natural decay',
+    fits: 'low LEO only',
     category: 'systems',
     subCategory: 'eol',
     mass: 0,
-    cost: 1,
+    cost: 0,
+    priceEur: 0,
     powerDelta: 0,
+    eolRule: 'low_leo',
     trl: 9.5,
-    riskPenaltyPercent: 6,
-    riskNote: 'Only compliant below ~450 km LEO; fails ODMSP in high LEO, GEO, or L2.',
-    description: 'Relies purely on residual aerodynamic drag for re-entry within 5–25 years.',
+    description:
+      'Atmospheric drag slowly pulls the spacecraft down. Works in low LEO only (€0).',
   },
   {
-    id: 'eol_drag_sail',
-    name: 'Deployable Kapton De-Orbit Drag Sail',
+    id: 'eol_e2_drag_sail',
+    name: 'E2. Drag sail',
+    fits: 'LEO up to ~800 km',
     category: 'systems',
     subCategory: 'eol',
-    mass: 2.5,
-    cost: 7,
-    powerDelta: -2,
-    deltaVAdded: 65,
+    mass: 1.5,
+    cost: 0.045, // ~€45,000
+    priceEur: 45000,
+    powerDelta: 0,
+    eolRule: 'leo_800',
+    trl: 9.0,
+    description:
+      'A deployed sail adds drag so it falls faster. Works in LEO up to ~800 km (~€45,000).',
+  },
+  {
+    id: 'eol_e3_attitude_drag',
+    name: 'E3. Attitude-based drag',
+    fits: 'low LEO; needs ADCS A2 or better',
+    category: 'systems',
+    subCategory: 'eol',
+    mass: 0,
+    cost: 0,
+    priceEur: 0,
+    powerDelta: 0,
+    eolRule: 'attitude_drag',
+    trl: 9.0,
+    description:
+      'The spacecraft turns broadside to increase drag. Works in low LEO; needs ADCS A2 or better (€0).',
+  },
+  {
+    id: 'eol_e4_propulsive',
+    name: 'E4. Propulsive',
+    fits: 'any orbit; needs P1 to P4 delta-v',
+    category: 'systems',
+    subCategory: 'eol',
+    mass: 0,
+    cost: 0, // uses the propulsion card
+    priceEur: 0,
+    powerDelta: 0,
+    eolRule: 'propulsive',
+    hasRedundancy: true,
+    trl: 9.5,
+    description:
+      'Thrusters push it down, or up to a graveyard orbit. Works in any orbit; needs P1 to P4 delta-v (€0 — uses the propulsion card).',
+  },
+  {
+    id: 'eol_e5_external_removal',
+    name: 'E5. External removal',
+    fits: 'LEO',
+    category: 'systems',
+    subCategory: 'eol',
+    mass: 1.0,
+    cost: 9.0, // ~€9,000,000
+    priceEur: 9000000,
+    powerDelta: 0,
+    eolRule: 'external_leo',
+    hasRedundancy: true,
     trl: 8.5,
-    description: '4 m² gossamer drag sail accelerating LEO re-entry to meet 5-year disposal rules.',
-  },
-  {
-    id: 'eol_controlled_reentry',
-    name: 'Dedicated De-Orbit Burn + Passivation Kit',
-    category: 'systems',
-    subCategory: 'eol',
-    mass: 12,
-    cost: 16,
-    powerDelta: -5,
-    deltaVAdded: 140,
-    hasRedundancy: true,
-    trl: 9.0,
-    description: 'Targeted ocean disposal burn + battery/propellant tank venting.',
-  },
-  {
-    id: 'eol_graveyard_boost',
-    name: 'GEO / L2 Graveyard Orbit Transfer Sequencer',
-    category: 'systems',
-    subCategory: 'eol',
-    mass: 15,
-    cost: 22,
-    powerDelta: -6,
-    deltaVAdded: 80,
-    hasRedundancy: true,
-    trl: 9.0,
-    description: 'Raises GEO spacecraft +300 km above the geostationary belt & passivates bus.',
+    description:
+      'A servicer spacecraft captures it and takes it down. Works in LEO (~€9,000,000).',
   },
 ];
 
@@ -831,7 +962,7 @@ export const INSTRUMENTS: Instrument[] = [
     type: '6 cm Precision Photometric CMOS Camera',
     referenceMission: 'ASTERIA',
     mass: 4,
-    cost: 0.45, // ~€0.45M
+    cost: 0.45,
     priceEur: 450000,
     power: 5,
     dataRate: 1.2,
@@ -853,7 +984,7 @@ export const INSTRUMENTS: Instrument[] = [
     type: '3 cm Wide-FOV Optical Photometer',
     referenceMission: 'BRITE',
     mass: 2.5,
-    cost: 0.27, // ~€0.27M
+    cost: 0.27,
     priceEur: 270000,
     power: 2,
     dataRate: 1.4,
@@ -875,7 +1006,7 @@ export const INSTRUMENTS: Instrument[] = [
     type: '32 cm Ritchey-Chrétien Photometer (Single Target)',
     referenceMission: 'CHEOPS (Trap Card)',
     mass: 58,
-    cost: 15, // ~€15M
+    cost: 15,
     power: 60,
     dataRate: 1.2,
     science: 40,
@@ -896,7 +1027,7 @@ export const INSTRUMENTS: Instrument[] = [
     type: '27 cm Off-Axis Telescope + 4 CCDs',
     referenceMission: 'CoRoT',
     mass: 300,
-    cost: 44.5, // ~€44.5M
+    cost: 44.5,
     power: 150,
     dataRate: 1.5,
     science: 85,
@@ -916,7 +1047,7 @@ export const INSTRUMENTS: Instrument[] = [
     type: '95 cm Schmidt Telescope + 42 CCDs',
     referenceMission: 'Kepler',
     mass: 478,
-    cost: 133.5, // ~€133.5M
+    cost: 133.5,
     power: 300,
     dataRate: 4.5,
     science: 110,
@@ -937,7 +1068,7 @@ export const INSTRUMENTS: Instrument[] = [
     type: 'Dual Astrometric & Spectroscopic Telescope',
     referenceMission: 'Gaia',
     mass: 524,
-    cost: 150, // ~€150M
+    cost: 150,
     power: 627,
     dataRate: 135,
     science: 150,
@@ -960,8 +1091,8 @@ export const INSTRUMENTS: Instrument[] = [
     path: 'telecom',
     type: '140 Mbit/s X-Band RF Payload',
     referenceMission: 'OPS-SAT / C3',
-    mass: 0.3, // ~0.3 kg
-    cost: 0.0287, // ~€28,700
+    mass: 0.3,
+    cost: 0.0287,
     priceEur: 28700,
     power: 12,
     dataRate: 136,
@@ -980,8 +1111,8 @@ export const INSTRUMENTS: Instrument[] = [
     path: 'telecom',
     type: '3U Optical Lasercom Terminal',
     referenceMission: 'TBIRD',
-    mass: 3, // ~3 kg
-    cost: 0.89, // ~€0.89M
+    mass: 3,
+    cost: 0.89,
     priceEur: 890000,
     power: 50,
     dataRate: 4800,
@@ -1001,8 +1132,8 @@ export const INSTRUMENTS: Instrument[] = [
     path: 'telecom',
     type: 'LEO Ku-Band Broadband Transponder',
     referenceMission: 'LEO Broadband Smallsat',
-    mass: 50, // ~50 kg
-    cost: 0.45, // ~€0.45M
+    mass: 50,
+    cost: 0.45,
     priceEur: 450000,
     power: 300,
     dataRate: 600,
@@ -1022,8 +1153,8 @@ export const INSTRUMENTS: Instrument[] = [
     path: 'telecom',
     type: 'GEO Optical Laser Relay Terminal',
     referenceMission: 'Tesat LCT (EDRS)',
-    mass: 50, // ~50 kg
-    cost: 26.7, // ~€26.7M
+    mass: 50,
+    cost: 26.7,
     power: 160,
     dataRate: 50000,
     science: 125,
@@ -1043,8 +1174,8 @@ export const INSTRUMENTS: Instrument[] = [
     path: 'telecom',
     type: 'Dual GEO Optical Laser Relay Terminals',
     referenceMission: 'LCRD',
-    mass: 150, // ~150 kg for two
-    cost: 44.5, // ~€44.5M
+    mass: 150,
+    cost: 44.5,
     power: 500,
     dataRate: 1200,
     science: 110,
@@ -1064,9 +1195,9 @@ export const INSTRUMENTS: Instrument[] = [
     path: 'telecom',
     type: 'GEO High-Power L-Band Multi-Beam Payload',
     referenceMission: 'Alphasat',
-    mass: 1000, // ~1,000 kg
-    cost: 178, // ~€178M
-    power: 10000, // ~10 kW
+    mass: 1000,
+    cost: 178,
+    power: 10000,
     dataRate: 900,
     science: 140,
     apertureCm: 1100,
@@ -1283,6 +1414,37 @@ export const LAUNCH_VEHICLES: LaunchVehicle[] = [
 ];
 
 // =========================================================================
+// HELPER: THERMAL BASE PRICE BY STRUCTURE SIZE CLASS (€5,000 CubeSat -> €500,000 Large)
+// =========================================================================
+export function getThermalBasePriceEur(structureId: string | null): number {
+  switch (structureId) {
+    case 'struct_s1_3u':
+    case 'struct_s2_6u':
+    case 'struct_s3_12u':
+      return 5000;
+    case 'struct_s4_micro':
+      return 25000;
+    case 'struct_s5_mini':
+      return 100000;
+    case 'struct_s6_medium':
+      return 250000;
+    case 'struct_s7_large':
+      return 500000;
+    default:
+      return 5000;
+  }
+}
+
+export function getThermalScaledPriceEur(
+  thermalComp: BusComponent,
+  structureId: string | null
+): number {
+  const baseEur = getThermalBasePriceEur(structureId);
+  const mult = thermalComp.thermalPriceMultiplier ?? 1;
+  return Math.round(baseEur * mult);
+}
+
+// =========================================================================
 // HELPER: RESOLVE EFFECTIVE DOWNLINK (GBIT/DAY) FOR A COMM COMPONENT & ORBIT
 // =========================================================================
 export function getCommDownlinkForOrbit(
@@ -1322,6 +1484,11 @@ export interface BusSelectionTotals {
   dataDownlink: number;
   contactMultiplier: number;
   degradationRate: number;
+  doseMultiplier: number;
+  maxStructureMassKg: number | null;
+  structureName: string | null;
+  selectedAdcsId: string | null;
+  selectedEolComp: BusComponent | null;
   commCompatibleWithOrbit: boolean;
   incompatibleCommName: string | null;
   adcsCompatibleWithOrbit: boolean;
@@ -1339,6 +1506,15 @@ export function calculateBusSelectionTotals(
     counts.set(id, (counts.get(id) ?? 0) + 1);
   });
 
+  // Pre-resolve active structure and radiation card (for thermal scaling & degradation override)
+  const structureComp = selectedBusIds
+    .map((id) => BUS_COMPONENTS.find((c) => c.id === id))
+    .find((c) => c?.subCategory === 'structure') ?? null;
+
+  const radiationComp = selectedBusIds
+    .map((id) => BUS_COMPONENTS.find((c) => c.id === id))
+    .find((c) => c?.subCategory === 'radiation') ?? null;
+
   let mass = 0;
   let cost = 0;
   let bolPower = 0;
@@ -1347,12 +1523,15 @@ export function calculateBusSelectionTotals(
   let bonusDeltaV = 0;
   let dataDownlink = 0;
   let contactMultiplier = 1;
-  let degradationRate = 0.025;
+  let degradationRate = radiationComp?.degradationRate ?? 0.025;
+  const doseMultiplier = radiationComp?.doseMultiplier ?? 1;
   let commCompatibleWithOrbit = true;
   let incompatibleCommName: string | null = null;
   let adcsCompatibleWithOrbit = true;
   let incompatibleAdcsName: string | null = null;
   let pointingAccuracyArcsec: number | null = null;
+  let selectedAdcsId: string | null = null;
+  let selectedEolComp: BusComponent | null = null;
   const trlValues: number[] = [];
 
   const activeOrbitId = orbit?.id ?? 'LEO';
@@ -1361,8 +1540,15 @@ export function calculateBusSelectionTotals(
     const comp = BUS_COMPONENTS.find((c) => c.id === id);
     if (!comp || qty <= 0) return;
 
-    const unitMass = comp.mass + (qty - 1) * (comp.extraUnitMass ?? comp.mass);
-    const unitCost = comp.cost + (qty - 1) * (comp.extraUnitCost ?? comp.cost);
+    let unitMass = comp.mass + (qty - 1) * (comp.extraUnitMass ?? comp.mass);
+    let unitCost = comp.cost + (qty - 1) * (comp.extraUnitCost ?? comp.cost);
+
+
+    if (comp.subCategory === 'thermal') {
+      unitMass = 0;
+      const scaledEur = getThermalScaledPriceEur(comp, structureComp?.id ?? null);
+      unitCost = scaledEur / 1_000_000;
+    }
 
     mass += unitMass;
     cost += unitCost;
@@ -1375,7 +1561,7 @@ export function calculateBusSelectionTotals(
     }
     if (comp.powerDelta > 0) {
       bolPower += comp.powerDelta * qty;
-      if (typeof comp.degradationRate === 'number') {
+      if (!radiationComp && typeof comp.degradationRate === 'number') {
         degradationRate = comp.degradationRate;
       }
     } else if (comp.rfTransmitWatts) {
@@ -1397,6 +1583,7 @@ export function calculateBusSelectionTotals(
     }
 
     if (comp.category === 'adcs') {
+      selectedAdcsId = comp.id;
       if (typeof comp.pointingAccuracyArcsec === 'number') {
         pointingAccuracyArcsec = comp.pointingAccuracyArcsec;
       }
@@ -1407,6 +1594,10 @@ export function calculateBusSelectionTotals(
         adcsCompatibleWithOrbit = false;
         incompatibleAdcsName = comp.name;
       }
+    }
+
+    if (comp.subCategory === 'eol') {
+      selectedEolComp = comp;
     }
 
     if (comp.contactMultiplier) {
@@ -1428,6 +1619,13 @@ export function calculateBusSelectionTotals(
     dataDownlink: Math.round(dataDownlink * 1000) / 1000,
     contactMultiplier,
     degradationRate,
+    doseMultiplier,
+    maxStructureMassKg: structureComp?.maxSpacecraftMassKg ?? null,
+    structureName: structureComp
+      ? `${structureComp.name} (${structureComp.sizeClass})`
+      : null,
+    selectedAdcsId,
+    selectedEolComp,
     commCompatibleWithOrbit,
     incompatibleCommName,
     adcsCompatibleWithOrbit,
@@ -1497,8 +1695,8 @@ export interface DifficultyConfig {
   tag: string;
   description: string;
   budgets: {
-    starObservation: number; // €M
-    telecom: number; // €M
+    starObservation: number;
+    telecom: number;
   };
 }
 

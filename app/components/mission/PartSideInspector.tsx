@@ -12,6 +12,7 @@ import {
   getCommDownlinkForOrbit,
   getLauncherMaxPayload,
   getOrbitTargetLabel,
+  getThermalScaledPriceEur,
 } from '../../data/missionData';
 import { sound } from '../../lib/sound';
 
@@ -196,6 +197,10 @@ export default function PartSideInspector({
   };
 
   const orbitTargetLabel = getOrbitTargetLabel(selectedOrbit, selectedObjective);
+  const selectedStructureId =
+    selectedBus.find(
+      (id) => BUS_COMPONENTS.find((b) => b.id === id)?.subCategory === 'structure'
+    ) ?? null;
 
   return (
     <aside className="w-full h-full min-h-0 border-2 border-[#1a881a] bg-[#030803]/95 p-3.5 flex flex-col gap-2.5 overflow-hidden">
@@ -246,7 +251,8 @@ export default function PartSideInspector({
 
         {(currentTab.key === 'launch_vehicle' ||
           currentTab.key === 'comm' ||
-          currentTab.key === 'adcs') && (
+          currentTab.key === 'adcs' ||
+          currentTab.key === 'eol') && (
           <div className="mt-2 px-2 py-1 border border-[#144414] bg-[#041004] text-[10px] font-bold text-[#28d828]">
             TARGET REGIME: <span className="text-amber-400">{orbitTargetLabel}</span>
           </div>
@@ -255,7 +261,7 @@ export default function PartSideInspector({
 
       {/* Scrollable Option Cards */}
       <div className="flex-1 min-h-0 overflow-y-auto pr-1 flex flex-col gap-2">
-        {/* PAYLOADS (4.2 PAYLOAD — DOES NOT INTERFERE WITH SCIENCE POINTS OR DATALINK) */}
+        {/* PAYLOADS (4.2 PAYLOAD) */}
         {currentTab.key === 'payload_instruments' &&
           (visibleItems as typeof INSTRUMENTS).map((inst) => {
             const isSelected = selectedInstruments.includes(inst.id);
@@ -382,7 +388,7 @@ export default function PartSideInspector({
             );
           })}
 
-        {/* STACKABLE BATTERIES (1.1 BATTERIES WITH + AND - CONTROLS) */}
+        {/* STACKABLE BATTERIES (1.1 BATTERIES) */}
         {currentTab.key === 'batteries' &&
           (visibleItems as BusComponent[]).map((item) => {
             const qty = selectedBus.filter((id) => id === item.id).length;
@@ -471,7 +477,7 @@ export default function PartSideInspector({
             );
           })}
 
-        {/* SINGLE COMMUNICATIONS TAB (2.1 COMMUNICATIONS) */}
+        {/* COMMUNICATIONS (2.1 COMMUNICATIONS) */}
         {currentTab.key === 'comm' &&
           (visibleItems as BusComponent[]).map((item) => {
             const isSelected = selectedBus.includes(item.id);
@@ -634,16 +640,206 @@ export default function PartSideInspector({
             );
           })}
 
-        {/* ALL OTHER BUS SUB-TABS */}
-        {currentTab.key !== 'payload_instruments' &&
-          currentTab.key !== 'launch_vehicle' &&
-          currentTab.key !== 'batteries' &&
-          currentTab.key !== 'comm' &&
-          currentTab.key !== 'adcs' &&
-          currentTab.key !== 'propulsion' &&
+        {/* STRUCTURE (5.1 STRUCTURE: S1–S7) */}
+        {currentTab.key === 'structure' &&
+          (visibleItems as BusComponent[]).map((item) => {
+            const isSelected = selectedBus.includes(item.id);
+
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  sound.playClick();
+                  onToggleBus(item.id);
+                }}
+                className={`p-2.5 border text-left transition-all cursor-pointer ${
+                  isSelected
+                    ? 'border-[#33ff33] bg-[#33ff33]/15 shadow-[0_0_10px_rgba(51,255,51,0.25)]'
+                    : 'border-[#144414] hover:border-[#1a881a]'
+                }`}
+              >
+                <div className="flex justify-between items-center gap-2">
+                  <span className="font-bold text-xs text-[#33ff33]">
+                    {item.name} — {item.sizeClass}
+                  </span>
+                  {isSelected && (
+                    <span className="text-[9px] text-amber-400 font-bold shrink-0">[EQUIPPED]</span>
+                  )}
+                </div>
+
+                <p className="text-[10px] text-[#22bb22] mt-1 leading-snug">{item.description}</p>
+
+                <div className="mt-1.5 text-[10px] font-bold text-amber-400">
+                  SIZE: {item.sizeClass?.toUpperCase()} | {formatComponentPrice(item, 1)}
+                </div>
+              </button>
+            );
+          })}
+
+        {/* RADIATION (5.2 RADIATION: R1–R4) */}
+        {currentTab.key === 'radiation' &&
+          (visibleItems as BusComponent[]).map((item) => {
+            const isSelected = selectedBus.includes(item.id);
+
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  sound.playClick();
+                  onToggleBus(item.id);
+                }}
+                className={`p-2.5 border text-left transition-all cursor-pointer ${
+                  isSelected
+                    ? 'border-[#33ff33] bg-[#33ff33]/15 shadow-[0_0_10px_rgba(51,255,51,0.25)]'
+                    : 'border-[#144414] hover:border-[#1a881a]'
+                }`}
+              >
+                <div className="flex justify-between items-center gap-2">
+                  <span className="font-bold text-xs text-[#33ff33]">{item.name}</span>
+                  {isSelected && (
+                    <span className="text-[9px] text-amber-400 font-bold shrink-0">[EQUIPPED]</span>
+                  )}
+                </div>
+
+                <p className="text-[10px] text-[#22bb22] mt-1 leading-snug">{item.description}</p>
+
+                <div className="mt-1.5 text-[10px] font-bold text-amber-400">
+                  AL EQ: ~{item.radiationShieldingMm} mm | DOSE: ×{item.doseMultiplier} | BOX MASS: +
+                  {item.mass} kg | DEGRAD: ~{((item.degradationRate ?? 0) * 100).toFixed(1)}%/YR
+                </div>
+              </button>
+            );
+          })}
+
+        {/* THERMAL (5.3 THERMAL: H1–H4) */}
+        {currentTab.key === 'thermal' &&
           (visibleItems as BusComponent[]).map((item) => {
             const isSelected = selectedBus.includes(item.id);
             const effectiveDraw = item.powerDelta < 0 ? Math.abs(item.powerDelta) : 0;
+            const scaledPriceEur = getThermalScaledPriceEur(item, selectedStructureId);
+
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  sound.playClick();
+                  onToggleBus(item.id);
+                }}
+                className={`p-2.5 border text-left transition-all cursor-pointer ${
+                  isSelected
+                    ? 'border-[#33ff33] bg-[#33ff33]/15 shadow-[0_0_10px_rgba(51,255,51,0.25)]'
+                    : 'border-[#144414] hover:border-[#1a881a]'
+                }`}
+              >
+                <div className="flex justify-between items-center gap-2">
+                  <span className="font-bold text-xs text-[#33ff33]">{item.name}</span>
+                  {isSelected && (
+                    <span className="text-[9px] text-amber-400 font-bold shrink-0">[EQUIPPED]</span>
+                  )}
+                </div>
+
+                <p className="text-[10px] text-[#22bb22] mt-1 leading-snug">{item.description}</p>
+
+                <div className="mt-1.5 text-[10px] font-bold text-amber-400">
+                  {effectiveDraw > 0 ? `-${effectiveDraw}W` : '0W'} | €
+                  {scaledPriceEur.toLocaleString()}
+                </div>
+              </button>
+            );
+          })}
+
+        {/* OBC (5.4 OBC: O1–O4) */}
+        {currentTab.key === 'obc' &&
+          (visibleItems as BusComponent[]).map((item) => {
+            const isSelected = selectedBus.includes(item.id);
+            const effectiveDraw = item.powerDelta < 0 ? Math.abs(item.powerDelta) : 0;
+
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  sound.playClick();
+                  onToggleBus(item.id);
+                }}
+                className={`p-2.5 border text-left transition-all cursor-pointer ${
+                  isSelected
+                    ? 'border-[#33ff33] bg-[#33ff33]/15 shadow-[0_0_10px_rgba(51,255,51,0.25)]'
+                    : 'border-[#144414] hover:border-[#1a881a]'
+                }`}
+              >
+                <div className="flex justify-between items-center gap-2">
+                  <span className="font-bold text-xs text-[#33ff33]">{item.name}</span>
+                  {isSelected && (
+                    <span className="text-[9px] text-amber-400 font-bold shrink-0">[EQUIPPED]</span>
+                  )}
+                </div>
+
+                {item.fits && (
+                  <div className="text-[9px] text-amber-300/90 mt-0.5">
+                    GOOD FOR: {item.fits.toUpperCase()}
+                  </div>
+                )}
+
+                <p className="text-[10px] text-[#22bb22] mt-1 leading-snug">{item.description}</p>
+
+                <div className="mt-1.5 text-[10px] font-bold text-amber-400">
+                  RAD: {item.radiationRatingKrad} krad | -{effectiveDraw}W | STORAGE:{' '}
+                  {item.storageGb} GB | {formatComponentPrice(item, 1)}
+                </div>
+              </button>
+            );
+          })}
+
+        {/* END OF LIFE (5.5 END OF LIFE: E1–E5) */}
+        {currentTab.key === 'eol' &&
+          (visibleItems as BusComponent[]).map((item) => {
+            const isSelected = selectedBus.includes(item.id);
+
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  sound.playClick();
+                  onToggleBus(item.id);
+                }}
+                className={`p-2.5 border text-left transition-all cursor-pointer ${
+                  isSelected
+                    ? 'border-[#33ff33] bg-[#33ff33]/15 shadow-[0_0_10px_rgba(51,255,51,0.25)]'
+                    : 'border-[#144414] hover:border-[#1a881a]'
+                }`}
+              >
+                <div className="flex justify-between items-center gap-2">
+                  <span className="font-bold text-xs text-[#33ff33]">{item.name}</span>
+                  {isSelected && (
+                    <span className="text-[9px] text-amber-400 font-bold shrink-0">[EQUIPPED]</span>
+                  )}
+                </div>
+
+                {item.fits && (
+                  <div className="text-[9px] text-amber-300/90 mt-0.5">
+                    WORKS IN: {item.fits.toUpperCase()}
+                  </div>
+                )}
+
+                <p className="text-[10px] text-[#22bb22] mt-1 leading-snug">{item.description}</p>
+
+                <div className="mt-1.5 text-[10px] font-bold text-amber-400">
+                  {formatComponentPrice(item, 1)}
+                  {item.eolRule === 'propulsive' ? ' (USES PROPULSION CARD)' : ''}
+                </div>
+              </button>
+            );
+          })}
+
+        {/* SOLAR PANELS (1.2 SOLAR PANELS) */}
+        {currentTab.key === 'solar_panels' &&
+          (visibleItems as BusComponent[]).map((item) => {
+            const isSelected = selectedBus.includes(item.id);
 
             return (
               <button
@@ -674,14 +870,7 @@ export default function PartSideInspector({
 
                 <p className="text-[10px] text-[#22bb22] mt-1 leading-snug">{item.description}</p>
                 <div className="mt-1.5 text-[10px] font-bold text-amber-400">
-                  {item.powerDelta > 0
-                    ? `+${item.powerDelta}W`
-                    : effectiveDraw > 0
-                    ? `-${effectiveDraw}W`
-                    : '0W'}{' '}
-                  | {formatMassLabel(item.mass)} | {formatComponentPrice(item, 1)}
-                  {item.deltaVAdded ? ` | +${item.deltaVAdded} m/s Δv` : ''}
-                  {item.pointingAccuracyArcsec ? ` | ${item.pointingAccuracyArcsec}"` : ''}
+                  +{item.powerDelta}W | {formatMassLabel(item.mass)} | {formatComponentPrice(item, 1)}
                 </div>
               </button>
             );

@@ -45,7 +45,7 @@ export function evaluateMission(
 
   const busTotals = calculateBusSelectionTotals(selectedBus, selectedOrbit);
 
-  let totalMass = 0 + busTotals.mass;
+  let totalMass = busTotals.mass;
   let totalCost = 35 + busTotals.cost;
   const bolPower = busTotals.bolPower;
   let powerDraw = 80 + busTotals.powerDraw;
@@ -74,6 +74,7 @@ export function evaluateMission(
   const rawCapacity = getLauncherMaxPayload(selectedLV, selectedOrbit, mission);
   const rocketCapacity = rawCapacity ?? 0;
   const orbitTargetLabel = getOrbitTargetLabel(selectedOrbit, mission);
+  const activeOrbitId = selectedOrbit?.id ?? (mission.orbitType === 'LEO' ? 'LEO' : 'GSO');
 
   const missionDeltaV =
     selectedOrbit?.deltaVReq ??
@@ -129,6 +130,18 @@ export function evaluateMission(
     );
   }
 
+  // Enforce Structure Max Mass Ceiling (S1–S7)
+  if (
+    busTotals.maxStructureMassKg !== null &&
+    totalMass > busTotals.maxStructureMassKg
+  ) {
+    binaryErrors.push(
+      `STRUCTURE GATE FAILED: TOTAL SPACECRAFT MASS (${totalMass.toLocaleString()} KG) EXCEEDS ${String(
+        busTotals.structureName
+      ).toUpperCase()} LIMIT (${busTotals.maxStructureMassKg.toLocaleString()} KG MAX).`
+    );
+  }
+
   if (!busTotals.commCompatibleWithOrbit && busTotals.incompatibleCommName) {
     binaryErrors.push(
       `COMMS GATE FAILED: ${String(busTotals.incompatibleCommName).toUpperCase()} IS NOT USABLE IN ${orbitTargetLabel}.`
@@ -146,7 +159,6 @@ export function evaluateMission(
       ? INSTRUMENTS.find((i) => i.id === selectedInstruments[0])
       : undefined;
 
-  // Enforce pointing accuracy against mission & payload requirement
   const requiredPointing = Math.min(
     mission.requirements?.maxPointingArcsec ?? Infinity,
     equippedInst?.requiredPointingArcsec ?? Infinity
@@ -164,7 +176,6 @@ export function evaluateMission(
     }
   }
 
-  // Enforce simultaneous-star survey requirement (catches single-star trap payload)
   if (
     mission.requirements?.minStarsSimultaneous &&
     equippedInst?.simultaneousStars !== undefined &&
@@ -173,6 +184,39 @@ export function evaluateMission(
     binaryErrors.push(
       `SCIENCE GATE FAILED: ${equippedInst.name.toUpperCase()} ONLY OBSERVES ${equippedInst.simultaneousStars} STAR AT A TIME (SURVEY REQUIRES ≥ ${mission.requirements.minStarsSimultaneous} SIMULTANEOUS STARS).`
     );
+  }
+
+  // Enforce End of Life (E1–E5) rules
+  if (busTotals.selectedEolComp) {
+    const eol = busTotals.selectedEolComp;
+    if (
+      (eol.eolRule === 'low_leo' ||
+        eol.eolRule === 'leo_800' ||
+        eol.eolRule === 'attitude_drag' ||
+        eol.eolRule === 'external_leo') &&
+      activeOrbitId !== 'LEO'
+    ) {
+      binaryErrors.push(
+        `EOL GATE FAILED: ${eol.name.toUpperCase()} ONLY WORKS IN LEO (NOT ${orbitTargetLabel}).`
+      );
+    }
+
+    if (eol.eolRule === 'attitude_drag') {
+      const hasA2OrBetter =
+        busTotals.selectedAdcsId !== null &&
+        busTotals.selectedAdcsId !== 'adcs_a1_simple';
+      if (!hasA2OrBetter) {
+        binaryErrors.push(
+          'EOL GATE FAILED: E3. ATTITUDE-BASED DRAG REQUIRES ADCS A2a/A2b OR BETTER.'
+        );
+      }
+    }
+
+    if (eol.eolRule === 'propulsive' && bonusDeltaV <= 0) {
+      binaryErrors.push(
+        'EOL GATE FAILED: E4. PROPULSIVE DISPOSAL REQUIRES PROPULSION P1 TO P4 WITH DELTA-V.'
+      );
+    }
   }
 
   if (totalCost > mission.maxBudget) {
@@ -215,6 +259,12 @@ export function evaluateMission(
   feedbackLog.push(
     `[OK] Booster ${selectedLV!.name} (${activeLVConfig!.name}) cleared for ${orbitTargetLabel}: ${totalMass.toLocaleString()} kg / ${rocketCapacity.toLocaleString()} kg max.`
   );
+
+  if (busTotals.maxStructureMassKg !== null) {
+    feedbackLog.push(
+      `[OK] Structure ${busTotals.structureName}: ${totalMass.toLocaleString()} kg / ${busTotals.maxStructureMassKg.toLocaleString()} kg max structural limit.`
+    );
+  }
 
   if (busTotals.pointingAccuracyArcsec !== null) {
     feedbackLog.push(
@@ -277,15 +327,16 @@ export function evaluateMission(
     feedbackLog.push(
       `[-20 PTS] WARNING: EOL Power after ${lifespanYears} yrs (${Math.round(
         eolPower
-      )} W) drops below system draw (${powerDraw} W) — late-mission brownout risk.`
+      )} W, ${(degradationRate * 100).toFixed(1)}%/yr degrad.) drops below system draw (${powerDraw} W).`
     );
   } else {
     feedbackLog.push(
-      `[OK] End-of-Life power margin positive (${Math.round(eolPower)} W >= ${powerDraw} W).`
+      `[OK] End-of-Life power margin positive (${Math.round(eolPower)} W >= ${powerDraw} W at ${(
+        degradationRate * 100
+      ).toFixed(1)}%/yr degradation).`
     );
   }
 
-  const activeOrbitId = selectedOrbit?.id ?? (mission.orbitType === 'LEO' ? 'LEO' : 'GSO');
   if (activeOrbitId === 'LEO' && remainingDeltaV < 50) {
     score -= 15;
     feedbackLog.push(
