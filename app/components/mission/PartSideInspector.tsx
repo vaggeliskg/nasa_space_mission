@@ -9,6 +9,7 @@ import {
   INSTRUMENTS,
   LAUNCH_VEHICLES,
   getActiveLVConfig,
+  getCommDownlinkForOrbit,
   getLauncherMaxPayload,
   getOrbitTargetLabel,
 } from '../../data/missionData';
@@ -58,16 +59,8 @@ const SLOT_CONFIG: Record<
   },
   comm: {
     code: 'HP-02 // COMMUNICATIONS & GROUND LINK',
-    title: 'FREQUENCY, CONTACT & TRANSCEIVER',
-    tabs: [
-      { key: 'comm_frequency', label: '2.1 FREQUENCY' },
-      { key: 'comm_contact', label: '2.2 CONTACT TIME' },
-      {
-        key: 'comm_transceiver',
-        label: '2.3 RADIO TX',
-        ruleBanner: 'POWER RULE: Radio draws 5× the RF power it transmits.',
-      },
-    ],
+    title: 'TRANSCEIVER & BUNDLED GROUND NETWORK',
+    tabs: [{ key: 'comm', label: '2.1 COMMUNICATIONS' }],
   },
   propulsion: {
     code: 'HP-03 // ORBITAL MANEUVERING',
@@ -108,6 +101,13 @@ function formatComponentPrice(item: BusComponent, qty = 1): string {
     return `€${item.priceEur.toLocaleString()}`;
   }
   return `€${item.cost}M`;
+}
+
+function formatMassLabel(massKg: number): string {
+  if (massKg > 0 && massKg < 1) {
+    return `${Math.round(massKg * 1000)}g`;
+  }
+  return `${massKg}kg`;
 }
 
 export default function PartSideInspector({
@@ -171,6 +171,13 @@ export default function PartSideInspector({
       ? missionInstruments
       : currentTab.key === 'launch_vehicle'
       ? LAUNCH_VEHICLES
+      : currentTab.key === 'comm'
+      ? BUS_COMPONENTS.filter(
+          (c) =>
+            c.subCategory === 'comm' &&
+            (c.path === 'both' ||
+              (isTelecomMission ? c.path === 'telecom' : c.path === 'star_obs'))
+        )
       : BUS_COMPONENTS.filter((c) => c.subCategory === currentTab.key);
 
   const canGoBack = safeTabIndex > 0;
@@ -237,7 +244,9 @@ export default function PartSideInspector({
           </div>
         )}
 
-        {currentTab.key === 'launch_vehicle' && (
+        {(currentTab.key === 'launch_vehicle' ||
+          currentTab.key === 'comm' ||
+          currentTab.key === 'adcs') && (
           <div className="mt-2 px-2 py-1 border border-[#144414] bg-[#041004] text-[10px] font-bold text-[#28d828]">
             TARGET REGIME: <span className="text-amber-400">{orbitTargetLabel}</span>
           </div>
@@ -246,9 +255,18 @@ export default function PartSideInspector({
 
       {/* Scrollable Option Cards */}
       <div className="flex-1 min-h-0 overflow-y-auto pr-1 flex flex-col gap-2">
+        {/* PAYLOADS (4.2 PAYLOAD) */}
         {currentTab.key === 'payload_instruments' &&
           (visibleItems as typeof INSTRUMENTS).map((inst) => {
             const isSelected = selectedInstruments.includes(inst.id);
+            const priceLabel = inst.priceEur
+              ? `€${inst.priceEur.toLocaleString()}`
+              : `€${inst.cost}M`;
+            const powerLabel =
+              inst.power >= 1000
+                ? `${(inst.power / 1000).toLocaleString()}kW`
+                : `${inst.power}W`;
+
             return (
               <button
                 key={inst.id}
@@ -273,12 +291,13 @@ export default function PartSideInspector({
                 </div>
                 <p className="text-[10px] text-[#22bb22] mt-1 leading-snug">{inst.description}</p>
                 <div className="mt-1.5 text-[10px] font-bold text-amber-400">
-                  +{inst.science} PTS | -{inst.power}W | {inst.mass}kg | €{inst.cost}M
+                  +{inst.science} PTS | -{powerLabel} | {formatMassLabel(inst.mass)} | {priceLabel}
                 </div>
               </button>
             );
           })}
 
+        {/* LAUNCH VEHICLES (3.2 LAUNCH VEHICLE) */}
         {currentTab.key === 'launch_vehicle' &&
           (visibleItems as typeof LAUNCH_VEHICLES).map((lv) => {
             const isSelected = lv.id === selectedLV?.id;
@@ -399,7 +418,6 @@ export default function PartSideInspector({
                 <div className="flex justify-between items-center gap-2">
                   <span className="font-bold text-xs text-[#33ff33]">{item.name}</span>
 
-                  {/* + / - Stack Counter */}
                   <div
                     className="flex items-center gap-1.5 shrink-0"
                     onClick={(e) => e.stopPropagation()}
@@ -452,17 +470,133 @@ export default function PartSideInspector({
             );
           })}
 
-        {/* ALL OTHER BUS SUB-TABS (INCLUDING SOLAR PANELS P2–P5) */}
+        {/* SINGLE COMMUNICATIONS TAB (2.1 COMMUNICATIONS) */}
+        {currentTab.key === 'comm' &&
+          (visibleItems as BusComponent[]).map((item) => {
+            const isSelected = selectedBus.includes(item.id);
+            const effectiveDraw = Math.abs(item.powerDelta);
+            const orbitRate = getCommDownlinkForOrbit(item, selectedOrbit);
+
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  sound.playClick();
+                  onToggleBus(item.id);
+                }}
+                className={`p-2.5 border text-left transition-all cursor-pointer ${
+                  isSelected
+                    ? 'border-[#33ff33] bg-[#33ff33]/15 shadow-[0_0_10px_rgba(51,255,51,0.25)]'
+                    : 'border-[#144414] hover:border-[#1a881a]'
+                }`}
+              >
+                <div className="flex justify-between items-center gap-2">
+                  <span className="font-bold text-xs text-[#33ff33]">{item.name}</span>
+                  {isSelected && (
+                    <span className="text-[9px] text-amber-400 font-bold shrink-0">[EQUIPPED]</span>
+                  )}
+                </div>
+
+                {item.groundNetwork && (
+                  <div className="text-[9px] text-amber-300/90 mt-0.5">
+                    {item.linkType ? `${item.linkType.toUpperCase()} // ` : ''}
+                    GROUND: {item.groundNetwork.toUpperCase()}
+                    {item.maxDataRateLabel ? ` // MAX: ${item.maxDataRateLabel}` : ''}
+                  </div>
+                )}
+
+                <p className="text-[10px] text-[#22bb22] mt-1 leading-snug">{item.description}</p>
+
+                <div className="mt-1.5 text-[10px] font-bold">
+                  <span className="text-amber-400">
+                    -{effectiveDraw}W DC | {formatMassLabel(item.mass)} |{' '}
+                    {formatComponentPrice(item, 1)}
+                  </span>
+                  {item.downlinkByRegime && (
+                    <>
+                      {' | '}
+                      {orbitRate !== null ? (
+                        <span className="text-[#33ff33]">
+                          {orbitRate} GBIT/DAY ({orbitTargetLabel})
+                        </span>
+                      ) : (
+                        <span className="text-red-400">
+                          NOT USABLE IN {orbitTargetLabel}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+
+        {/* ADCS (4.1 ADCS ATTITUDE) */}
+        {currentTab.key === 'adcs' &&
+          (visibleItems as BusComponent[]).map((item) => {
+            const isSelected = selectedBus.includes(item.id);
+            const effectiveDraw = item.powerDelta < 0 ? Math.abs(item.powerDelta) : 0;
+            const activeOrbitId = selectedOrbit?.id ?? 'LEO';
+            const isOrbitCompatible =
+              !item.compatibleOrbitIds ||
+              item.compatibleOrbitIds.includes(activeOrbitId);
+
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  sound.playClick();
+                  onToggleBus(item.id);
+                }}
+                className={`p-2.5 border text-left transition-all cursor-pointer ${
+                  isSelected
+                    ? 'border-[#33ff33] bg-[#33ff33]/15 shadow-[0_0_10px_rgba(51,255,51,0.25)]'
+                    : 'border-[#144414] hover:border-[#1a881a]'
+                }`}
+              >
+                <div className="flex justify-between items-center gap-2">
+                  <span className="font-bold text-xs text-[#33ff33]">{item.name}</span>
+                  {isSelected && (
+                    <span className="text-[9px] text-amber-400 font-bold shrink-0">[EQUIPPED]</span>
+                  )}
+                </div>
+
+                <div className="text-[9px] text-amber-300/90 mt-0.5">
+                  {item.fits ? `SIZE: ${item.fits.toUpperCase()} // ` : ''}
+                  {item.wheelUnloading ? `UNLOAD: ${item.wheelUnloading.toUpperCase()} // ` : ''}
+                  WORKS IN: {(item.compatibleOrbitIds ?? ['LEO']).join(', ')}
+                </div>
+
+                <p className="text-[10px] text-[#22bb22] mt-1 leading-snug">{item.description}</p>
+
+                <div className="mt-1.5 text-[10px] font-bold">
+                  <span className="text-amber-400">
+                    -{effectiveDraw}W | {formatMassLabel(item.mass)} |{' '}
+                    {formatComponentPrice(item, 1)} | ACC: {item.pointingAccuracyArcsec}&quot;
+                    {item.pointingKnowledgeArcsec ? ` (KNOW: ${item.pointingKnowledgeArcsec}")` : ''}
+                  </span>
+                  {!isOrbitCompatible && (
+                    <span className="text-red-400">
+                      {' '}
+                      | NOT USABLE IN {activeOrbitId}
+                    </span>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+
+        {/* ALL OTHER BUS SUB-TABS */}
         {currentTab.key !== 'payload_instruments' &&
           currentTab.key !== 'launch_vehicle' &&
           currentTab.key !== 'batteries' &&
+          currentTab.key !== 'comm' &&
+          currentTab.key !== 'adcs' &&
           (visibleItems as BusComponent[]).map((item) => {
             const isSelected = selectedBus.includes(item.id);
-            const effectiveDraw = item.rfTransmitWatts
-              ? item.rfTransmitWatts * 5
-              : item.powerDelta < 0
-              ? Math.abs(item.powerDelta)
-              : 0;
+            const effectiveDraw = item.powerDelta < 0 ? Math.abs(item.powerDelta) : 0;
 
             return (
               <button
@@ -498,10 +632,7 @@ export default function PartSideInspector({
                     : effectiveDraw > 0
                     ? `-${effectiveDraw}W`
                     : '0W'}{' '}
-                  | {item.mass}kg | {formatComponentPrice(item, 1)}
-                  {item.rfTransmitWatts
-                    ? ` | TX: ${item.rfTransmitWatts}W → DRAW: ${item.rfTransmitWatts * 5}W`
-                    : ''}
+                  | {formatMassLabel(item.mass)} | {formatComponentPrice(item, 1)}
                   {item.deltaVAdded ? ` | +${item.deltaVAdded} m/s Δv` : ''}
                   {item.pointingAccuracyArcsec ? ` | ${item.pointingAccuracyArcsec}"` : ''}
                 </div>
