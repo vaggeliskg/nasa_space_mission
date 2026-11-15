@@ -3,9 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Starfield from '../components/StarField';
-import MoonViewer from '../components/MoonViewer';
 import EarthViewer from '../components/EarthViewer';
-import { LunarBeacon } from '../data/lunarData';
 import { LaunchSite } from '../data/earthData';
 import { sound } from '../lib/sound';
 
@@ -27,15 +25,7 @@ interface StoredMissionConfig {
 export default function SimulationPage() {
   const router = useRouter();
   const [config, setConfig] = useState<StoredMissionConfig | null>(null);
-  const [selectedAnomaly, setSelectedAnomaly] = useState<LunarBeacon | null>(null);
   const [selectedLaunchSite, setSelectedLaunchSite] = useState<LaunchSite | null>(null);
-  const [selectedBeacon, setSelectedBeacon] = useState<LunarBeacon | null>(null);
-  const [scannedIds, setScannedIds] = useState<string[]>([]);
-
-  const handleScanBeacon = (beacon: LunarBeacon) => {
-    setScannedIds((prev) => (prev.includes(beacon.id) ? prev : [...prev, beacon.id]));
-  };
-
 
   useEffect(() => {
     const raw = sessionStorage.getItem('missionConfig');
@@ -48,9 +38,6 @@ export default function SimulationPage() {
     }
   }, []);
 
-  const missionId = config?.objective?.id ?? 'lunar_recon';
-  const isEarthMission = missionId === 'earth_obs';
-
   return (
     <div className="crt-container relative min-h-screen flex flex-col p-4 sm:p-8 select-none">
       <Starfield />
@@ -60,7 +47,7 @@ export default function SimulationPage() {
         <header className="border-2 border-[#1a881a] bg-[#030803]/95 p-4 flex flex-wrap justify-between items-center gap-3">
           <div>
             <div className="text-[10px] tracking-widest text-[#1a881a]">
-              ORBITAL TELEMETRY SIMULATOR // {isEarthMission ? 'EARTH ORBIT' : 'LUNAR ORBIT'}
+              ORBITAL TELEMETRY SIMULATOR // EARTH ORBIT
             </div>
             <h1 className="text-base font-bold text-[#33ff33] tracking-wider">
               {config?.objective?.name || 'ORBITAL RECONNAISSANCE'} — {config?.objective?.target || 'ACTIVE'}
@@ -79,20 +66,10 @@ export default function SimulationPage() {
           </button>
         </header>
 
-        {isEarthMission ? (
-          <EarthViewer
-            selectedSite={selectedLaunchSite}
-            onSelectSite={setSelectedLaunchSite}
-          />
-        ) : (
-          <MoonViewer
-            installedInstruments={config?.instruments || []}
-            selectedBeacon={selectedBeacon}
-            scannedIds={scannedIds}
-            onSelectBeacon={setSelectedBeacon}
-            onScanBeacon={handleScanBeacon}
-          />
-        )}
+        <EarthViewer
+          selectedSite={selectedLaunchSite}
+          onSelectSite={setSelectedLaunchSite}
+        />
       </div>
     </div>
   );
