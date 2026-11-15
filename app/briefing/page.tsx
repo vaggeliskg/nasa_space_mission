@@ -21,7 +21,7 @@ export default function BriefingPage() {
 
   const isComplete = charCount >= FULL_TEXT.length;
 
-useEffect(() => {
+  useEffect(() => {
     if (isComplete) return;
 
     const timer = setInterval(() => {
@@ -75,6 +75,31 @@ useEffect(() => {
           <span className="text-[#33ff33]">
             {isComplete ? '[TRANSMISSION COMPLETE]' : '[RECEIVING STREAM... CLICK TO SKIP]'}
           </span>
+        </div>
+
+        {/* Commander Transmission Portrait */}
+        <div className="flex items-center gap-4 border border-[#144414] bg-[#041004]/90 p-3 mb-6">
+          <div className="relative w-20 h-20 sm:w-24 sm:h-24 shrink-0 border-2 border-[#33ff33] overflow-hidden bg-[#020602]">
+            <img
+              src="/images/commander.jpg"
+              alt="Flight Director"
+              className="w-full h-full object-cover contrast-110"
+            />
+            <div className="pointer-events-none absolute inset-0 bg-[#33ff33]/10 mix-blend-screen" />
+          </div>
+
+          <div className="flex flex-col gap-1 font-mono">
+            <div className="flex items-center gap-2">
+              <span
+                className={`inline-block w-2 h-2 ${
+                  isComplete ? 'bg-[#33ff33]' : 'bg-amber-400 animate-ping'
+                }`}
+              />
+              <span className="text-[10px] font-bold tracking-widest text-amber-400">
+                {isComplete ? 'CHANNEL STANDBY // UPLINK VERIFIED' : 'LIVE AUDIO/VIDEO UPLINK'}
+              </span>
+            </div>
+          </div>
         </div>
 
         {/* Typewriter Briefing Body */}
