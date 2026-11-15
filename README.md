@@ -14,7 +14,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 An interactive 3D spacecraft engineering and orbital mission planning simulator styled as an 80's retro Mission Control terminal. Players select an orbital regime, assemble a spacecraft from real-world aerospace subsystems within strict mass, power, and budget constraints, pass a  Flight Readiness Assessment, and launch into a 3D orbital simulation.
 
-## Mission Flow
+## Mission Flow:s
 
 1. **Title & Teletype Briefing (`/`, `/briefing`)** — Retro terminal boot-up with Web Audio API sound effects and mission parameters.
 2. **Orbital Regime Selection (`/orbits`)** — Interactive 3D Earth visualizer displaying **LEO (400 km)**, **GSO (35,786 km)**, and the **Sun-Earth L2 Point** with orbital mechanics specs and $\Delta v$ requirements.
