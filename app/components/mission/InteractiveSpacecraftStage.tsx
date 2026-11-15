@@ -7,7 +7,7 @@ import { OrbitControls, Html, useGLTF, Environment } from '@react-three/drei';
 import * as THREE from 'three';
 import { sound } from '../../lib/sound';
 
-export type SpacecraftPartSlot = 'power' | 'comm' | 'adcs' | 'payload' | 'launcher';
+export type SpacecraftPartSlot = 'power' | 'comm' | 'propulsion' | 'adcs' | 'systems';
 
 interface Hardpoint {
   slot: SpacecraftPartSlot;
@@ -17,11 +17,11 @@ interface Hardpoint {
 }
 
 const HARDPOINTS: Hardpoint[] = [
-  { slot: 'power', code: 'HP-01', label: 'SOLAR ARRAYS', position: [1.3, 0.15, 0] },
-  { slot: 'comm', code: 'HP-02', label: 'COMMS DISH', position: [0, 0.95, 0.3] },
-  { slot: 'adcs', code: 'HP-03', label: 'ADCS / AVIONICS', position: [0, 0.05, 0.85] },
-  { slot: 'payload', code: 'HP-04', label: 'PAYLOAD BAY', position: [-0.95, -0.2, 0.4] },
-  { slot: 'launcher', code: 'HP-05', label: 'BOOSTER STAGE', position: [0, -0.95, -0.35] },
+  { slot: 'power', code: 'HP-01', label: 'POWER (BAT / SOLAR)', position: [1.3, 0.15, 0] },
+  { slot: 'comm', code: 'HP-02', label: 'COMMUNICATIONS', position: [0, 0.95, 0.3] },
+  { slot: 'propulsion', code: 'HP-03', label: 'PROPULSION & LV', position: [0, -0.95, -0.35] },
+  { slot: 'adcs', code: 'HP-04', label: 'ADCS & PAYLOADS', position: [0, 0.05, 0.85] },
+  { slot: 'systems', code: 'HP-05', label: 'BUS & SURVIVABILITY', position: [-0.95, -0.2, 0.4] },
 ];
 
 interface InteractiveSpacecraftStageProps {
@@ -173,7 +173,6 @@ export default function InteractiveSpacecraftStage({
 
   return (
     <div className="relative w-full h-115 sm:h-135 border-2 border-[#1a881a] bg-[#020602] overflow-hidden">
-      {/* Dedicated DOM portal target so Drei <Html> never unmounts synchronously inside R3F */}
       <div ref={portalRef} className="pointer-events-none" />
 
       <Canvas camera={{ position: [0, 1.4, 5.2], fov: 45 }}>
