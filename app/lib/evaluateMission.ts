@@ -1,5 +1,12 @@
 import { Objective, LaunchVehicle } from '../types/mission';
-import { BUS_COMPONENTS, INSTRUMENTS } from '../data/missionData';
+import { OrbitRegime } from '../data/orbitData';
+import {
+  BUS_COMPONENTS,
+  INSTRUMENTS,
+  getActiveLVConfig,
+  getLauncherMaxPayload,
+  getOrbitTargetLabel,
+} from '../data/missionData';
 
 export interface SpacecraftBuildInput {
   selectedBus: string[];
@@ -16,6 +23,7 @@ export interface MissionEvaluationResult {
   feedbackLog: string[];
   metrics: {
     totalMass: number;
+    totalCost: number;
     rocketCapacity: number;
     massMarginRatio: number;
     totalDeltaV: number;
@@ -30,84 +38,72 @@ export interface MissionEvaluationResult {
 
 export function evaluateMission(
   spacecraft: SpacecraftBuildInput,
-  mission: Objective
+  mission: Objective,
+  selectedOrbit: OrbitRegime | null = null
 ): MissionEvaluationResult {
   const { selectedBus, selectedInstruments, selectedLV } = spacecraft;
 
-  // 1. Aggregate spacecraft mass, power, Delta-V, and TRL stats
   let totalMass = 250; // Dry chassis base mass (kg)
-  let totalCost = 0;
+  let totalCost = 35; // Base integration & engineering cost (€M)
   let bolPower = 0;
   let powerDraw = 80; // Baseline housekeeping draw (W)
-  let degradationRate = 0.025; // Default 2.5% annual solar degradation
+  let bonusDeltaV = 0;
+  let degradationRate = 0.025;
   const trlValues: number[] = [];
 
-selectedBus.forEach((bId) => {
-    const comp = BUS_COMPONENTS.find((c) => c.id === bId) as
-      | (typeof BUS_COMPONENTS[number] & { trl?: number; degradationRate?: number })
-      | undefined;
-    if (comp) {
-      totalMass += comp.mass;
-      totalCost += comp.cost;
-      if (comp.powerDelta > 0) {
-        bolPower += comp.powerDelta;
-        if (typeof comp.degradationRate === 'number') {
-          degradationRate = comp.degradationRate;
-        }
-      } else {
-        powerDraw += Math.abs(comp.powerDelta);
-      }
-      trlValues.push(comp.trl ?? 8.5);
+  selectedBus.forEach((bId) => {
+    const comp = BUS_COMPONENTS.find((c) => c.id === bId);
+    if (!comp) return;
+    totalMass += comp.mass;
+    totalCost += comp.cost;
+    if (comp.deltaVAdded) {
+      bonusDeltaV += comp.deltaVAdded;
     }
+
+    if (comp.powerDelta > 0) {
+      bolPower += comp.powerDelta;
+      if (typeof comp.degradationRate === 'number') {
+        degradationRate = comp.degradationRate;
+      }
+    } else if (comp.rfTransmitWatts) {
+      // Power rule: Radio draws 5x the power it transmits
+      powerDraw += comp.rfTransmitWatts * 5;
+    } else {
+      powerDraw += Math.abs(comp.powerDelta);
+    }
+
+    trlValues.push(comp.trl ?? 8.5);
   });
 
   selectedInstruments.forEach((iId) => {
-      const inst = INSTRUMENTS.find((i) => i.id === iId) as
-        | (typeof INSTRUMENTS[number] & { trl?: number })
-        | undefined;
-      if (inst) {
-        totalMass += inst.mass;
-        totalCost += inst.cost;
-        powerDraw += inst.power;
-        trlValues.push(inst.trl ?? 8.0);
-      }
-    });
-    
+    const inst = INSTRUMENTS.find((i) => i.id === iId);
+    if (!inst) return;
+    totalMass += inst.mass;
+    totalCost += inst.cost;
+    powerDraw += inst.power;
+    trlValues.push(inst.trl ?? 8.0);
+  });
 
-  const missionExt = mission as Objective & {
-      requiredDeltaV?: number;
-      lifespanYears?: number;
-      orbitType?: 'LEO' | 'GEO' | 'DEEP_SPACE';
-    };
+  const activeLVConfig = getActiveLVConfig(selectedLV);
+  if (selectedLV && activeLVConfig) {
+    totalCost += activeLVConfig.cost;
+    trlValues.push(selectedLV.trl ?? 9.0);
+  }
 
-    const lvExt = selectedLV as
-      | (LaunchVehicle & {
-          deltaV?: number;
-          trl?: number;
-        })
-      | null;
+  const rawCapacity = getLauncherMaxPayload(selectedLV, selectedOrbit, mission);
+  const rocketCapacity = rawCapacity ?? 0;
+  const orbitTargetLabel = getOrbitTargetLabel(selectedOrbit, mission);
 
-    if (lvExt) {
-      totalCost += lvExt.cost;
-      trlValues.push(lvExt.trl ?? 9.0);
-    }
-
-const orbitType = missionExt.orbitType ?? 'LEO';
-
-  const rocketCapacity = lvExt
-    ? orbitType === 'LEO'
-      ? lvExt.maxPayloadLEO
-      : lvExt.maxPayloadDeepSpace
-    : 0;
-
-  // Default Delta-V budgets (m/s) if not explicitly defined on mission/LV objects yet
   const missionDeltaV =
-    missionExt.requiredDeltaV ?? (orbitType === 'LEO' ? 9400 : 12800);
-  const totalDeltaV = lvExt
-    ? lvExt.deltaV ?? (orbitType === 'LEO' ? 9600 : 13100)
-    : 0;
+    selectedOrbit?.deltaVReq ??
+    mission.requiredDeltaV ??
+    (mission.orbitType === 'LEO' ? 9400 : 12800);
 
-  const lifespanYears = missionExt.lifespanYears ?? 5;
+  const totalDeltaV = activeLVConfig
+    ? activeLVConfig.deltaV + bonusDeltaV
+    : bonusDeltaV;
+
+  const lifespanYears = mission.lifespanYears ?? 5;
 
   const avgTrl =
     trlValues.length > 0
@@ -121,6 +117,7 @@ const orbitType = missionExt.orbitType ?? 'LEO';
 
   const baseMetrics = {
     totalMass,
+    totalCost,
     rocketCapacity,
     massMarginRatio,
     totalDeltaV,
@@ -137,30 +134,36 @@ const orbitType = missionExt.orbitType ?? 'LEO';
   // =========================================================================
   const binaryErrors: string[] = [];
 
-  if (!lvExt) {
-    binaryErrors.push('LAUNCH GATE FAILED: NO LAUNCH VEHICLE ASSIGNED TO HP-05.');
+  if (!selectedLV || !activeLVConfig) {
+    binaryErrors.push(
+      'LAUNCH GATE FAILED: NO LAUNCH VEHICLE ASSIGNED (HP-03 → 3.2 LAUNCH VEHICLE).'
+    );
+  } else if (rawCapacity === null || rawCapacity <= 0) {
+    binaryErrors.push(
+      `LAUNCH GATE FAILED: ${selectedLV.name.toUpperCase()} (${activeLVConfig.name.toUpperCase()}) IS NOT RATED FOR ${orbitTargetLabel} (0 KG CAPACITY).`
+    );
   } else if (totalMass > rocketCapacity) {
     binaryErrors.push(
-      `LAUNCH GATE FAILED: TOTAL MASS (${totalMass} KG) EXCEEDS BOOSTER CAPACITY (${rocketCapacity} KG).`
+      `LAUNCH GATE FAILED: TOTAL MASS (${totalMass.toLocaleString()} KG) EXCEEDS ${selectedLV.name.toUpperCase()} [${activeLVConfig.name.toUpperCase()}] CAPACITY FOR ${orbitTargetLabel} (${rocketCapacity.toLocaleString()} KG).`
+    );
+  }
+
+  if (totalCost > mission.maxBudget) {
+    const overBy = totalCost - mission.maxBudget;
+    binaryErrors.push(
+      `BUDGET GATE FAILED: TOTAL COST (€${totalCost}M) EXCEEDS ALLOCATED ${mission.name.toUpperCase()} BUDGET (€${mission.maxBudget}M) BY €${overBy}M.`
     );
   }
 
   if (totalDeltaV < missionDeltaV) {
     binaryErrors.push(
-      `DELTA-V GATE FAILED: TOTAL DELTA-V (${totalDeltaV} M/S) < MISSION REQUIREMENT (${missionDeltaV} M/S).`
+      `DELTA-V GATE FAILED: TOTAL DELTA-V (${totalDeltaV.toLocaleString()} M/S) < MISSION REQUIREMENT (${missionDeltaV.toLocaleString()} M/S).`
     );
   }
 
   if (bolPower < powerDraw) {
     binaryErrors.push(
       `POWER GATE (BOL) FAILED: GENERATED POWER (${bolPower} W) < SYSTEM DRAW (${powerDraw} W).`
-    );
-  }
-  
-  if (totalCost > mission.maxBudget) {
-    const overBy = totalCost - mission.maxBudget;
-    binaryErrors.push(
-      `BUDGET GATE FAILED: TOTAL COST (€${totalCost}M) EXCEEDS ALLOCATED ${mission.name.toUpperCase()} BUDGET (€${mission.maxBudget}M) BY €${overBy}M.`
     );
   }
 
@@ -182,7 +185,10 @@ const orbitType = missionExt.orbitType ?? 'LEO';
   let score = 100;
   const feedbackLog: string[] = [];
 
-  // Rule 1 - Mass Growth Allowance (MGA)
+  feedbackLog.push(
+    `[OK] Booster ${selectedLV!.name} (${activeLVConfig!.name}) cleared for ${orbitTargetLabel}: ${totalMass.toLocaleString()} kg / ${rocketCapacity.toLocaleString()} kg max.`
+  );
+
   if (massMarginRatio < 0.2) {
     score -= 15;
     feedbackLog.push(
@@ -196,7 +202,6 @@ const orbitType = missionExt.orbitType ?? 'LEO';
     );
   }
 
-  // Rule 2 - TRL Risk Assessment
   if (avgTrl < 7.5) {
     const criticalAnomaly = Math.random() < 0.2;
     if (criticalAnomaly) {
@@ -226,7 +231,6 @@ const orbitType = missionExt.orbitType ?? 'LEO';
     );
   }
 
-  // Rule 3 - End-of-Life (EOL) Power
   if (eolPower < powerDraw) {
     score -= 20;
     feedbackLog.push(
@@ -240,16 +244,16 @@ const orbitType = missionExt.orbitType ?? 'LEO';
     );
   }
 
-  // Rule 4 - ODMSP (Space Debris Mitigation)
-  if (orbitType === 'LEO' && remainingDeltaV < 50) {
+  const activeOrbitId = selectedOrbit?.id ?? (mission.orbitType === 'LEO' ? 'LEO' : 'GSO');
+  if (activeOrbitId === 'LEO' && remainingDeltaV < 50) {
     score -= 15;
     feedbackLog.push(
       `[-15 PTS] ODMSP VIOLATION: Remaining Delta-V (${remainingDeltaV} m/s) is below the 50 m/s LEO de-orbit reserve.`
     );
-  } else if (orbitType === 'GEO' && remainingDeltaV < 15) {
+  } else if (activeOrbitId !== 'LEO' && remainingDeltaV < 15) {
     score -= 15;
     feedbackLog.push(
-      `[-15 PTS] ODMSP VIOLATION: Remaining Delta-V (${remainingDeltaV} m/s) is below the 15 m/s GEO graveyard orbit reserve.`
+      `[-15 PTS] ODMSP VIOLATION: Remaining Delta-V (${remainingDeltaV} m/s) is below the 15 m/s graveyard orbit reserve.`
     );
   } else {
     feedbackLog.push(
@@ -257,9 +261,6 @@ const orbitType = missionExt.orbitType ?? 'LEO';
     );
   }
 
-  // =========================================================================
-  // STEP 3: RANK CALCULATION
-  // =========================================================================
   const finalScore = Math.max(0, score);
   let rank: 'S' | 'A' | 'B' | 'C' = 'C';
   if (finalScore > 90) rank = 'S';

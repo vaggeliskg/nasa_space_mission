@@ -1,5 +1,39 @@
 export type OrbitRegimeId = 'LEO' | 'GSO' | 'L2';
 
+export interface LeoInclinationOption {
+  id: string;
+  deg: number;
+  label: string;
+  description: string;
+}
+
+export const LEO_INCLINATIONS: LeoInclinationOption[] = [
+  {
+    id: 'inc_28_5',
+    deg: 28.5,
+    label: '28.5° — Cape Canaveral',
+    description: 'Lowest Energy Requirement from Florida',
+  },
+  {
+    id: 'inc_51_6',
+    deg: 51.6,
+    label: '51.6° — ISS Standard',
+    description: 'ISS, also good for Telecoms',
+  },
+  {
+    id: 'inc_90',
+    deg: 90,
+    label: '90° — Polar Orbit',
+    description: 'World Coverage, good for earth observation and weather',
+  },
+  {
+    id: 'inc_98',
+    deg: 98,
+    label: '98° — Sun-Synchronous',
+    description: 'Passes from each place at the same time of the day. Good for star observation',
+  },
+];
+
 export interface OrbitRegime {
   id: OrbitRegimeId;
   code: string;
@@ -10,6 +44,7 @@ export interface OrbitRegime {
   mappedObjectiveId: string;
   visualRadius: number;
   inclinationDeg: number;
+  selectedInclination?: LeoInclinationOption;
   color: string;
   summary: string;
   engineeringImpact: string;
@@ -27,6 +62,7 @@ export const ORBIT_REGIMES: OrbitRegime[] = [
     mappedObjectiveId: 'earth_obs',
     visualRadius: 1.81,
     inclinationDeg: 51.6,
+    selectedInclination: LEO_INCLINATIONS[1],
     color: '#33ff33',
     summary:
       'A close-proximity orbital band skimming just above Earth’s atmosphere. Spacecraft complete roughly 15.5 revolutions per day, passing rapidly over ground targets.',

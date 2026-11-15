@@ -3,12 +3,21 @@
 import { useState, useEffect } from 'react';
 import { SpacecraftPartSlot } from './InteractiveSpacecraftStage';
 import { Objective, LaunchVehicle, BusSubCategory } from '../../types/mission';
-import { BUS_COMPONENTS, INSTRUMENTS, LAUNCH_VEHICLES } from '../../data/missionData';
+import { OrbitRegime } from '../../data/orbitData';
+import {
+  BUS_COMPONENTS,
+  INSTRUMENTS,
+  LAUNCH_VEHICLES,
+  getActiveLVConfig,
+  getLauncherMaxPayload,
+  getOrbitTargetLabel,
+} from '../../data/missionData';
 import { sound } from '../../lib/sound';
 
 interface PartSideInspectorProps {
   activeSlot: SpacecraftPartSlot | null;
   selectedObjective: Objective;
+  selectedOrbit: OrbitRegime | null;
   selectedBus: string[];
   selectedInstruments: string[];
   selectedLV: LaunchVehicle | null;
@@ -86,6 +95,7 @@ const SLOT_CONFIG: Record<
 export default function PartSideInspector({
   activeSlot,
   selectedObjective,
+  selectedOrbit,
   selectedBus,
   selectedInstruments,
   selectedLV,
@@ -95,7 +105,6 @@ export default function PartSideInspector({
 }: PartSideInspectorProps) {
   const [activeTabIndex, setActiveTabIndex] = useState(0);
 
-  // Reset to the first sub-tab whenever the user switches to a different 3D hardpoint
   useEffect(() => {
     setActiveTabIndex(0);
   }, [activeSlot]);
@@ -117,7 +126,6 @@ export default function PartSideInspector({
   const safeTabIndex = Math.min(activeTabIndex, slotMeta.tabs.length - 1);
   const currentTab = slotMeta.tabs[safeTabIndex];
 
-  // Show all items in the active sub-tab at once (4 cards for bus categories, 5 for payloads, 3 for LVs)
   const visibleItems =
     currentTab.key === 'payload_instruments'
       ? INSTRUMENTS
@@ -139,6 +147,8 @@ export default function PartSideInspector({
     sound.playClick();
     setActiveTabIndex(safeTabIndex + 1);
   };
+
+  const orbitTargetLabel = getOrbitTargetLabel(selectedOrbit, selectedObjective);
 
   return (
     <aside className="w-full h-full min-h-0 border-2 border-[#1a881a] bg-[#030803]/95 p-3.5 flex flex-col gap-2.5 overflow-hidden">
@@ -186,9 +196,15 @@ export default function PartSideInspector({
             ⚡ {currentTab.ruleBanner}
           </div>
         )}
+
+        {currentTab.key === 'launch_vehicle' && (
+          <div className="mt-2 px-2 py-1 border border-[#144414] bg-[#041004] text-[10px] font-bold text-[#28d828]">
+            TARGET REGIME: <span className="text-amber-400">{orbitTargetLabel}</span>
+          </div>
+        )}
       </div>
 
-      {/* Scrollable Option Cards (All 4 cards in the active sub-tab shown together) */}
+      {/* Scrollable Option Cards */}
       <div className="flex-1 min-h-0 overflow-y-auto pr-1 flex flex-col gap-2">
         {currentTab.key === 'payload_instruments' &&
           (visibleItems as typeof INSTRUMENTS).map((inst) => {
@@ -224,17 +240,21 @@ export default function PartSideInspector({
         {currentTab.key === 'launch_vehicle' &&
           (visibleItems as typeof LAUNCH_VEHICLES).map((lv) => {
             const isSelected = lv.id === selectedLV?.id;
-            const cap =
-              selectedObjective.orbitType === 'LEO'
-                ? lv.maxPayloadLEO
-                : lv.maxPayloadDeepSpace;
+            const effectiveLV: LaunchVehicle =
+              isSelected && selectedLV ? selectedLV : lv;
+            const activeCfg = getActiveLVConfig(effectiveLV)!;
+            const cap = getLauncherMaxPayload(
+              effectiveLV,
+              selectedOrbit,
+              selectedObjective
+            );
+
             return (
-              <button
+              <div
                 key={lv.id}
-                type="button"
                 onClick={() => {
                   sound.playClick();
-                  onSelectLV(lv);
+                  onSelectLV(effectiveLV);
                 }}
                 className={`p-2.5 border text-left transition-all cursor-pointer ${
                   isSelected
@@ -245,14 +265,59 @@ export default function PartSideInspector({
                 <div className="flex justify-between items-center gap-2">
                   <span className="font-bold text-xs text-[#33ff33]">{lv.name}</span>
                   {isSelected && (
-                    <span className="text-[9px] text-amber-400 font-bold shrink-0">[SELECTED]</span>
+                    <span className="text-[9px] text-amber-400 font-bold shrink-0">
+                      [SELECTED // {activeCfg.name.toUpperCase()}]
+                    </span>
                   )}
                 </div>
                 <p className="text-[10px] text-[#22bb22] mt-1 leading-snug">{lv.description}</p>
-                <div className="mt-1.5 text-[10px] font-bold text-amber-400">
-                  MAX PAYLOAD: {cap}kg | COST: €{lv.cost}M | Δv: {lv.deltaV ?? 9500} m/s
+
+                {/* Booster Configuration Selector Pills */}
+                <div className="mt-2 pt-1.5 border-t border-[#144414]/80">
+                  <div className="text-[9px] tracking-wider text-[#1a881a] mb-1">
+                    BOOSTER CONFIGURATION:
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {lv.configurations.map((cfg) => {
+                      const isCfgActive = activeCfg.id === cfg.id;
+                      return (
+                        <button
+                          key={cfg.id}
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            sound.playClick();
+                            onSelectLV({
+                              ...lv,
+                              selectedConfigId: cfg.id,
+                            });
+                          }}
+                          className={`px-2 py-0.5 border text-[9px] font-bold tracking-wider cursor-pointer transition-all ${
+                            isCfgActive
+                              ? 'border-amber-400 bg-amber-500/20 text-amber-300'
+                              : 'border-[#144414] bg-[#040c04] text-[#22bb22] hover:border-[#1a881a]'
+                          }`}
+                        >
+                          {cfg.name} (€{cfg.cost}M)
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </button>
+
+                <div className="mt-2 text-[10px] font-bold">
+                  {cap !== null && cap > 0 ? (
+                    <span className="text-amber-400">
+                      MAX PAYLOAD ({orbitTargetLabel}): {cap.toLocaleString()} KG | COST: €
+                      {activeCfg.cost}M
+                    </span>
+                  ) : (
+                    <span className="text-red-400">
+                      NOT RATED FOR {orbitTargetLabel} (0 KG) | COST: €{activeCfg.cost}M
+                    </span>
+                  )}
+                </div>
+              </div>
             );
           })}
 

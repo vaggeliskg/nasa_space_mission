@@ -17,6 +17,8 @@ import {
   DIFFICULTY_LEVELS,
   DifficultyLevel,
   DifficultyConfig,
+  getActiveLVConfig,
+  getLauncherMaxPayload,
 } from '../data/missionData';
 import { OrbitRegime } from '../data/orbitData';
 import { Objective, LaunchVehicle, TelemetryData } from '../types/mission';
@@ -32,18 +34,15 @@ export default function SoloMissionPlanning() {
   const [selectedOrbit, setSelectedOrbit] = useState<OrbitRegime | null>(null);
   const [activeSlot, setActiveSlot] = useState<SpacecraftPartSlot | null>(null);
 
-  // Selected components state (empty by default so all 5 hardpoints start unassigned)
   const [selectedBus, setSelectedBus] = useState<string[]>([]);
   const [selectedInstruments, setSelectedInstruments] = useState<string[]>([]);
   const [selectedLV, setSelectedLV] = useState<LaunchVehicle | null>(null);
 
-  // Evaluation & Tutorial states
   const [assessmentResult, setAssessmentResult] =
     useState<MissionEvaluationResult | null>(null);
   const [isAssessing, setIsAssessing] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
 
-  // Helper to resolve budget cap by mission type & difficulty
   const getDifficultyBudget = (obj: Objective, diff: DifficultyConfig): number => {
     const isTelecom =
       obj.id.toLowerCase().includes('telecom') ||
@@ -53,7 +52,6 @@ export default function SoloMissionPlanning() {
     return isTelecom ? diff.budgets.telecom : diff.budgets.starObservation;
   };
 
-  // Close Difficulty modal when pressing Escape
   useEffect(() => {
     if (!pendingObjective) return;
 
@@ -68,7 +66,6 @@ export default function SoloMissionPlanning() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [pendingObjective]);
 
-  // Restore Mission Path (with difficulty budget) + Confirmed Orbit Regime when returning from /orbits
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -106,7 +103,6 @@ export default function SoloMissionPlanning() {
     }
   }, []);
 
-  // Auto-open VAB Guide tour on first entry into assembly view
   useEffect(() => {
     if (typeof window === 'undefined' || viewMode !== 'assembly') return;
 
@@ -120,13 +116,11 @@ export default function SoloMissionPlanning() {
     }
   }, [viewMode]);
 
-  // Step 1A: Click Mission Path -> open Difficulty modal
   const handleSelectObjective = (obj: Objective) => {
     sound.playClick();
     setPendingObjective(obj);
   };
 
-  // Step 1B: Confirm Difficulty -> apply budget cap -> save to sessionStorage -> push to /orbits
   const handleConfirmDifficulty = (diff: DifficultyConfig) => {
     if (!pendingObjective) return;
     sound.playBoot();
@@ -151,7 +145,6 @@ export default function SoloMissionPlanning() {
     router.push('/orbits');
   };
 
-  // Toggle Bus component (one per subCategory so each sub-tab can hold an equipped part)
   const handleToggleBus = (id: string) => {
     const target = BUS_COMPONENTS.find((b) => b.id === id);
     if (!target) return;
@@ -167,7 +160,6 @@ export default function SoloMissionPlanning() {
     setAssessmentResult(null);
   };
 
-  // Toggle Payload Instrument
   const handleToggleInstrument = (id: string) => {
     setSelectedInstruments((prev) =>
       prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
@@ -175,13 +167,11 @@ export default function SoloMissionPlanning() {
     setAssessmentResult(null);
   };
 
-  // Select Launch Vehicle
   const handleSelectLV = (lv: LaunchVehicle) => {
     setSelectedLV(lv);
     setAssessmentResult(null);
   };
 
-  // Live Spacecraft Telemetry Calculation (includes 5x Radio Power Rule & Contact Multiplier)
   const telemetry: TelemetryData = useMemo(() => {
     let mass = 250; // Dry chassis base mass (kg)
     let cost = 35; // Base integration & engineering cost (€M)
@@ -200,7 +190,6 @@ export default function SoloMissionPlanning() {
       if (comp.powerDelta > 0) {
         powerGen += comp.powerDelta;
       } else if (comp.rfTransmitWatts) {
-        // Power rule: Radio draws 5x the power it transmits
         powerDraw += comp.rfTransmitWatts * 5;
       } else {
         powerDraw += Math.abs(comp.powerDelta);
@@ -227,26 +216,21 @@ export default function SoloMissionPlanning() {
       scienceScore += inst.science;
     });
 
-    if (selectedLV) {
-      cost += selectedLV.cost;
+    const activeCfg = getActiveLVConfig(selectedLV);
+    if (activeCfg) {
+      cost += activeCfg.cost;
     }
 
     const netPower = powerGen - powerDraw;
-    const isLeoMission = selectedOrbit
-      ? selectedOrbit.id === 'LEO'
-      : selectedObjective.orbitType === 'LEO';
-
-    const maxCapacity = selectedLV
-      ? isLeoMission
-        ? selectedLV.maxPayloadLEO
-        : selectedLV.maxPayloadDeepSpace
-      : 0;
+    const rawCap = getLauncherMaxPayload(selectedLV, selectedOrbit, selectedObjective);
+    const maxCapacity = rawCap ?? 0;
 
     const massMargin = maxCapacity - mass;
     const budgetMargin = selectedObjective.maxBudget - cost;
 
     const isLaunchViable =
       Boolean(selectedLV) &&
+      maxCapacity > 0 &&
       mass <= maxCapacity &&
       cost <= selectedObjective.maxBudget &&
       netPower >= 0 &&
@@ -270,7 +254,6 @@ export default function SoloMissionPlanning() {
     };
   }, [selectedBus, selectedInstruments, selectedLV, selectedObjective, selectedOrbit]);
 
-  // Equipped labels for 3D hardpoint pills
   const equippedLabels: Record<SpacecraftPartSlot, string> = useMemo(() => {
     const getSlotSummary = (cat: 'power' | 'comm' | 'propulsion' | 'adcs' | 'systems') => {
       const names = selectedBus
@@ -280,10 +263,15 @@ export default function SoloMissionPlanning() {
       return names.length > 0 ? `${names.length} EQUIPPED` : 'UNASSIGNED';
     };
 
+    const activeCfg = getActiveLVConfig(selectedLV);
+
     return {
       power: getSlotSummary('power'),
       comm: getSlotSummary('comm'),
-      propulsion: selectedLV ? selectedLV.name : getSlotSummary('propulsion'),
+      propulsion:
+        selectedLV && activeCfg
+          ? `${selectedLV.name} (${activeCfg.name})`
+          : getSlotSummary('propulsion'),
       adcs:
         selectedInstruments.length > 0
           ? `${selectedInstruments.length} PAYLOAD(S)`
@@ -303,7 +291,6 @@ export default function SoloMissionPlanning() {
     return set;
   }, [selectedBus, selectedInstruments, selectedLV]);
 
-  // Run Pre-Launch Flight Readiness Assessment with 3-second diagnostic delay
   const handleRunAssessment = () => {
     if (isAssessing) return;
     sound.playClick();
@@ -317,7 +304,8 @@ export default function SoloMissionPlanning() {
           selectedInstruments,
           selectedLV,
         },
-        selectedObjective
+        selectedObjective,
+        selectedOrbit
       );
       setAssessmentResult(result);
       setIsAssessing(false);
@@ -325,7 +313,6 @@ export default function SoloMissionPlanning() {
     }, 3000);
   };
 
-  // Launch into 3D Simulation
   const handleLaunch = () => {
     if (!assessmentResult?.passed || !selectedLV) return;
     sound.playClick();
@@ -354,7 +341,6 @@ export default function SoloMissionPlanning() {
       <Starfield />
 
       <div className="relative z-10 w-full max-w-7xl mx-auto flex flex-col gap-4">
-        {/* Top Terminal Navigation Bar */}
         <header className="border-2 border-[#1a881a] bg-[#030803]/95 px-4 py-3 flex flex-wrap justify-between items-center gap-3">
           <div className="flex items-center gap-3">
             <span className="text-xs font-bold tracking-widest text-amber-400">
@@ -365,8 +351,14 @@ export default function SoloMissionPlanning() {
             {viewMode === 'assembly' && (
               <span className="text-[11px] text-[#28d828] border border-[#144414] px-2 py-0.5 bg-[#041004]">
                 PATH: {selectedObjective.name.toUpperCase()}
-                {selectedOrbit ? ` // ORBIT: ${selectedOrbit.name}` : ''} //{' '}
-                {selectedDifficulty.toUpperCase()} (€{selectedObjective.maxBudget}M)
+                {selectedOrbit
+                  ? ` // ORBIT: ${selectedOrbit.name}${
+                      selectedOrbit.id === 'LEO' && selectedOrbit.selectedInclination
+                        ? ` (${selectedOrbit.selectedInclination.deg}°)`
+                        : ''
+                    }`
+                  : ''}{' '}
+                // {selectedDifficulty.toUpperCase()} (€{selectedObjective.maxBudget}M)
               </span>
             )}
           </div>
@@ -415,7 +407,6 @@ export default function SoloMissionPlanning() {
           </div>
         </header>
 
-        {/* VIEW 1: MISSION PATH SELECTION + DIFFICULTY MODAL */}
         {viewMode === 'objective' ? (
           <div className="my-auto py-4">
             <StageObjective
@@ -423,7 +414,6 @@ export default function SoloMissionPlanning() {
               onSelect={handleSelectObjective}
             />
 
-            {/* DIFFICULTY & BUDGET CAP OVERLAY */}
             {pendingObjective && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
                 <div className="w-full max-w-2xl border-2 border-[#33ff33] bg-[#030903] p-6 shadow-[0_0_30px_rgba(51,255,51,0.3)] flex flex-col gap-5 font-mono">
@@ -481,9 +471,7 @@ export default function SoloMissionPlanning() {
             )}
           </div>
         ) : (
-          /* VIEW 2: 3D VAB SPACECRAFT ASSEMBLY */
           <>
-            {/* Target 01: Telemetry HUD */}
             <div data-tour-target="telemetry-hud">
               <TelemetryHud
                 telemetry={telemetry}
@@ -492,9 +480,7 @@ export default function SoloMissionPlanning() {
               />
             </div>
 
-            {/* Main Assembly Workspace: 3D Spacecraft Stage + Stretching Side Inspector */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
-              {/* Left 3D Spacecraft Stage */}
               <div className="lg:col-span-7 flex flex-col">
                 <InteractiveSpacecraftStage
                   activeSlot={activeSlot}
@@ -504,7 +490,6 @@ export default function SoloMissionPlanning() {
                 />
               </div>
 
-              {/* Right Side Subsystem Inspector (Locks to 3D stage's exact height on lg+) */}
               <div
                 data-tour-target="part-inspector"
                 className="lg:col-span-5 relative min-h-105 lg:min-h-0"
@@ -516,6 +501,7 @@ export default function SoloMissionPlanning() {
                     selectedInstruments={selectedInstruments}
                     selectedLV={selectedLV}
                     selectedObjective={selectedObjective}
+                    selectedOrbit={selectedOrbit}
                     onToggleBus={handleToggleBus}
                     onToggleInstrument={handleToggleInstrument}
                     onSelectLV={handleSelectLV}
@@ -524,7 +510,6 @@ export default function SoloMissionPlanning() {
               </div>
             </div>
 
-            {/* Bottom Full-Width Flight Readiness & Launch Control Console */}
             <div className="border-2 border-[#1a881a] bg-[#030903]/95 p-4 flex flex-col gap-3">
               <div className="flex flex-wrap justify-between items-center gap-2 border-b border-[#144414] pb-2">
                 <div className="flex items-center gap-2">
@@ -610,7 +595,6 @@ export default function SoloMissionPlanning() {
                   )}
                 </div>
 
-                {/* Target 05: Launch Controls */}
                 <div
                   data-tour-target="launch-button"
                   className="flex flex-wrap sm:flex-nowrap gap-2 w-full lg:w-auto shrink-0"

@@ -79,13 +79,29 @@ export interface Instrument {
   description: string;
 }
 
-export interface LaunchVehicle {
+export interface LaunchVehicleCapacities {
+  leo28_5: number | null; // 400km 28.5 deg
+  leo51_6: number | null; // 400km 51.6 deg
+  leoPolar: number | null; // 400km Polar (90 deg)
+  leoSSO: number | null; // 400km SSO (98 deg)
+  gso: number | null; // 35,786km GTO/GSO
+  l2: number | null; // L2 (C3 = 0)
+}
+
+export interface LaunchVehicleConfiguration {
   id: string;
   name: string;
-  cost: number;
-  maxPayloadLEO: number;
-  maxPayloadDeepSpace: number;
-  deltaV?: number;
+  cost: number; // €M
+  deltaV: number; // m/s
+  capacities: LaunchVehicleCapacities;
+}
+
+export interface LaunchVehicle {
+  id: string;
+  company: string;
+  name: string;
+  selectedConfigId: string;
+  configurations: LaunchVehicleConfiguration[];
   trl?: number;
   description: string;
 }

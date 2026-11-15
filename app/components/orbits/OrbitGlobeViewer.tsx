@@ -10,6 +10,7 @@ import { sound } from '../../lib/sound';
 interface OrbitGlobeViewerProps {
   selectedId: OrbitRegimeId | null;
   onSelect: (regime: OrbitRegime) => void;
+  regimes?: OrbitRegime[];
 }
 
 function EarthCore() {
@@ -159,7 +160,11 @@ function OrbitRingAndMarker({
   );
 }
 
-export default function OrbitGlobeViewer({ selectedId, onSelect }: OrbitGlobeViewerProps) {
+export default function OrbitGlobeViewer({
+  selectedId,
+  onSelect,
+  regimes = ORBIT_REGIMES,
+}: OrbitGlobeViewerProps) {
   const portalRef = useRef<HTMLDivElement>(null!);
 
   return (
@@ -177,7 +182,7 @@ export default function OrbitGlobeViewer({ selectedId, onSelect }: OrbitGlobeVie
 
       {/* Bottom quick-select legend pills */}
       <div className="absolute bottom-3 left-3 right-3 z-10 flex flex-wrap gap-2 justify-center sm:justify-start">
-        {ORBIT_REGIMES.map((regime) => {
+        {regimes.map((regime) => {
           const active = selectedId === regime.id;
           return (
             <button
@@ -205,7 +210,7 @@ export default function OrbitGlobeViewer({ selectedId, onSelect }: OrbitGlobeVie
         <ambientLight intensity={1.1} />
         <directionalLight position={[6, 4, 5]} intensity={2.2} />
         <EarthCore />
-        {ORBIT_REGIMES.map((regime) => (
+        {regimes.map((regime) => (
           <OrbitRingAndMarker
             key={regime.id}
             regime={regime}
