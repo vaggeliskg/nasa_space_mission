@@ -19,6 +19,7 @@ import {
   DIFFICULTY_LEVELS,
   DifficultyLevel,
   DifficultyConfig,
+  calculateBusSelectionTotals,
   getActiveLVConfig,
   getLauncherMaxPayload,
 } from '../data/missionData';
@@ -148,10 +149,15 @@ export default function SoloMissionPlanning() {
     router.push('/orbits');
   };
 
-  // Toggle Bus component (one per subCategory so each sub-tab holds its own equipped item)
+  // Single-select toggle for non-battery bus subCategories (one per subCategory)
   const handleToggleBus = (id: string) => {
     const target = BUS_COMPONENTS.find((b) => b.id === id);
     if (!target) return;
+
+    if (target.subCategory === 'batteries') {
+      handleAdjustBusQuantity(id, 1);
+      return;
+    }
 
     setSelectedBus((prev) => {
       const isAlreadyEquipped = prev.includes(id);
@@ -160,6 +166,31 @@ export default function SoloMissionPlanning() {
         return existing?.subCategory !== target.subCategory;
       });
       return isAlreadyEquipped ? filtered : [...filtered, id];
+    });
+    setAssessmentResult(null);
+  };
+
+  // Stackable + / - quantity adjuster for batteries
+  const handleAdjustBusQuantity = (id: string, delta: number) => {
+    const target = BUS_COMPONENTS.find((b) => b.id === id);
+    if (!target) return;
+
+    setSelectedBus((prev) => {
+      if (delta > 0) {
+        const next = [...prev];
+        for (let i = 0; i < delta; i++) {
+          next.push(id);
+        }
+        return next;
+      } else if (delta < 0) {
+        const next = [...prev];
+        for (let i = 0; i < Math.abs(delta); i++) {
+          const idx = next.lastIndexOf(id);
+          if (idx !== -1) next.splice(idx, 1);
+        }
+        return next;
+      }
+      return prev;
     });
     setAssessmentResult(null);
   };
@@ -177,37 +208,15 @@ export default function SoloMissionPlanning() {
   };
 
   const telemetry: TelemetryData = useMemo(() => {
-    let mass = 250; // Dry chassis base mass (kg)
-    let cost = 35; // Base integration & engineering cost (€M)
-    let powerGen = 0;
-    let powerDraw = 80; // Baseline housekeeping draw (W)
-    let dataDownlinkCapacity = 0;
-    let contactMultiplier = 1;
+    const busTotals = calculateBusSelectionTotals(selectedBus);
+
+    let mass = 250 + busTotals.mass; // Dry chassis base mass (kg) + bus
+    let cost = 35 + busTotals.cost; // Base integration & engineering cost (€M) + bus
+    const powerGen = busTotals.bolPower;
+    let powerDraw = 80 + busTotals.powerDraw; // Baseline housekeeping draw (W) + bus
+    const dataDownlinkCapacity =
+      Math.round(busTotals.dataDownlink * busTotals.contactMultiplier * 10) / 10;
     let scienceScore = 0;
-
-    selectedBus.forEach((bId) => {
-      const comp = BUS_COMPONENTS.find((c) => c.id === bId);
-      if (!comp) return;
-      mass += comp.mass;
-      cost += comp.cost;
-
-      if (comp.powerDelta > 0) {
-        powerGen += comp.powerDelta;
-      } else if (comp.rfTransmitWatts) {
-        powerDraw += comp.rfTransmitWatts * 5;
-      } else {
-        powerDraw += Math.abs(comp.powerDelta);
-      }
-
-      if (comp.dataDownlink) {
-        dataDownlinkCapacity += comp.dataDownlink;
-      }
-      if (comp.contactMultiplier) {
-        contactMultiplier = Math.max(contactMultiplier, comp.contactMultiplier);
-      }
-    });
-
-    dataDownlinkCapacity = Math.round(dataDownlinkCapacity * contactMultiplier * 10) / 10;
 
     let dataGenerated = 0;
     selectedInstruments.forEach((iId) => {
@@ -225,12 +234,15 @@ export default function SoloMissionPlanning() {
       cost += activeCfg.cost;
     }
 
+    mass = Math.round(mass * 100) / 100;
+    cost = Math.round(cost * 1000) / 1000;
+
     const netPower = powerGen - powerDraw;
     const rawCap = getLauncherMaxPayload(selectedLV, selectedOrbit, selectedObjective);
     const maxCapacity = rawCap ?? 0;
 
-    const massMargin = maxCapacity - mass;
-    const budgetMargin = selectedObjective.maxBudget - cost;
+    const massMargin = Math.round((maxCapacity - mass) * 100) / 100;
+    const budgetMargin = Math.round((selectedObjective.maxBudget - cost) * 1000) / 1000;
 
     const isLaunchViable =
       Boolean(selectedLV) &&
@@ -260,11 +272,10 @@ export default function SoloMissionPlanning() {
 
   const equippedLabels: Record<SpacecraftPartSlot, string> = useMemo(() => {
     const getSlotSummary = (cat: 'power' | 'comm' | 'propulsion' | 'adcs' | 'systems') => {
-      const names = selectedBus
+      const count = selectedBus
         .map((bId) => BUS_COMPONENTS.find((c) => c.id === bId))
-        .filter((c) => c?.category === cat)
-        .map((c) => c!.name);
-      return names.length > 0 ? `${names.length} EQUIPPED` : 'UNASSIGNED';
+        .filter((c) => c?.category === cat).length;
+      return count > 0 ? `${count} EQUIPPED` : 'UNASSIGNED';
     };
 
     const activeCfg = getActiveLVConfig(selectedLV);
@@ -518,6 +529,7 @@ export default function SoloMissionPlanning() {
                     selectedObjective={selectedObjective}
                     selectedOrbit={selectedOrbit}
                     onToggleBus={handleToggleBus}
+                    onAdjustBusQuantity={handleAdjustBusQuantity}
                     onToggleInstrument={handleToggleInstrument}
                     onSelectLV={handleSelectLV}
                     onSubTabChange={setActiveSubTab}

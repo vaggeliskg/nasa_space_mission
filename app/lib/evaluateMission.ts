@@ -1,8 +1,8 @@
 import { Objective, LaunchVehicle } from '../types/mission';
 import { OrbitRegime } from '../data/orbitData';
 import {
-  BUS_COMPONENTS,
   INSTRUMENTS,
+  calculateBusSelectionTotals,
   getActiveLVConfig,
   getLauncherMaxPayload,
   getOrbitTargetLabel,
@@ -43,37 +43,15 @@ export function evaluateMission(
 ): MissionEvaluationResult {
   const { selectedBus, selectedInstruments, selectedLV } = spacecraft;
 
-  let totalMass = 250; // Dry chassis base mass (kg)
-  let totalCost = 35; // Base integration & engineering cost (€M)
-  let bolPower = 0;
-  let powerDraw = 80; // Baseline housekeeping draw (W)
-  let bonusDeltaV = 0;
-  let degradationRate = 0.025;
-  const trlValues: number[] = [];
+  const busTotals = calculateBusSelectionTotals(selectedBus);
 
-  selectedBus.forEach((bId) => {
-    const comp = BUS_COMPONENTS.find((c) => c.id === bId);
-    if (!comp) return;
-    totalMass += comp.mass;
-    totalCost += comp.cost;
-    if (comp.deltaVAdded) {
-      bonusDeltaV += comp.deltaVAdded;
-    }
-
-    if (comp.powerDelta > 0) {
-      bolPower += comp.powerDelta;
-      if (typeof comp.degradationRate === 'number') {
-        degradationRate = comp.degradationRate;
-      }
-    } else if (comp.rfTransmitWatts) {
-      // Power rule: Radio draws 5x the power it transmits
-      powerDraw += comp.rfTransmitWatts * 5;
-    } else {
-      powerDraw += Math.abs(comp.powerDelta);
-    }
-
-    trlValues.push(comp.trl ?? 8.5);
-  });
+  let totalMass = 250 + busTotals.mass; // Dry chassis base mass (kg) + bus
+  let totalCost = 35 + busTotals.cost; // Base integration & engineering cost (€M) + bus
+  const bolPower = busTotals.bolPower;
+  let powerDraw = 80 + busTotals.powerDraw; // Baseline housekeeping draw (W) + bus
+  const bonusDeltaV = busTotals.bonusDeltaV;
+  const degradationRate = busTotals.degradationRate;
+  const trlValues: number[] = [...busTotals.trlValues];
 
   selectedInstruments.forEach((iId) => {
     const inst = INSTRUMENTS.find((i) => i.id === iId);
@@ -89,6 +67,9 @@ export function evaluateMission(
     totalCost += activeLVConfig.cost;
     trlValues.push(selectedLV.trl ?? 9.0);
   }
+
+  totalMass = Math.round(totalMass * 100) / 100;
+  totalCost = Math.round(totalCost * 1000) / 1000;
 
   const rawCapacity = getLauncherMaxPayload(selectedLV, selectedOrbit, mission);
   const rocketCapacity = rawCapacity ?? 0;
@@ -149,7 +130,7 @@ export function evaluateMission(
   }
 
   if (totalCost > mission.maxBudget) {
-    const overBy = totalCost - mission.maxBudget;
+    const overBy = Math.round((totalCost - mission.maxBudget) * 1000) / 1000;
     binaryErrors.push(
       `BUDGET GATE FAILED: TOTAL COST (€${totalCost}M) EXCEEDS ALLOCATED ${mission.name.toUpperCase()} BUDGET (€${mission.maxBudget}M) BY €${overBy}M.`
     );
@@ -188,6 +169,12 @@ export function evaluateMission(
   feedbackLog.push(
     `[OK] Booster ${selectedLV!.name} (${activeLVConfig!.name}) cleared for ${orbitTargetLabel}: ${totalMass.toLocaleString()} kg / ${rocketCapacity.toLocaleString()} kg max.`
   );
+
+  if (busTotals.totalBatteryWh > 0) {
+    feedbackLog.push(
+      `[OK] Eclipse Energy Storage configured: ${busTotals.totalBatteryWh.toLocaleString()} Wh total battery capacity.`
+    );
+  }
 
   if (massMarginRatio < 0.2) {
     score -= 15;

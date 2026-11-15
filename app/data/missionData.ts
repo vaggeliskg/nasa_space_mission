@@ -47,119 +47,140 @@ export const OBJECTIVES: Objective[] = [
 
 export const BUS_COMPONENTS: BusComponent[] = [
   // =========================================================================
-  // HP-01: POWER — 1.1 BATTERIES (4 CARDS)
+  // HP-01: POWER — 1.1 BATTERIES (B1–B4, STACKABLE WITH + AND -)
   // =========================================================================
   {
-    id: 'bat_li_ion_80wh',
-    name: 'Compact Li-Ion Pack (80 Wh)',
+    id: 'bat_isispace_45wh',
+    name: 'B1. ISISPACE battery pack',
+    maker: 'ISISPACE, Netherlands',
+    fits: 'CubeSats 3U to 12U (up to 3 packs per board)',
     category: 'power',
     subCategory: 'batteries',
-    mass: 1.5,
-    cost: 4,
-    powerDelta: -2,
-    batteryCapacityWh: 80,
+    mass: 0.25,
+    cost: 0.00275, // €2,750
+    priceEur: 2750,
+    powerDelta: 0,
+    batteryCapacityWh: 45,
     trl: 9.0,
-    riskPenaltyPercent: 8,
-    riskNote: 'Low eclipse reserve; only viable for low-power CubeSat duty cycles.',
-    description: '6U CubeSat lithium-ion cell pack for short LEO eclipse passes (35 min).',
+    description:
+      'ISISPACE (Netherlands) — 45 Wh/unit (~179 Wh/kg). Fits CubeSats 3U to 12U (up to 3 packs per board). Stackable with + / -.',
   },
   {
-    id: 'bat_li_ion_450wh',
-    name: 'Modular Li-Ion Battery Bank (450 Wh)',
+    id: 'bat_dragonfly_28_300',
+    name: 'B2. Dragonfly 28-300 Battery Module',
+    maker: 'Dragonfly Aerospace, South Africa',
+    fits: 'micro, ~50 kg class',
     category: 'power',
     subCategory: 'batteries',
-    mass: 6,
-    cost: 14,
-    powerDelta: -5,
-    batteryCapacityWh: 450,
+    mass: 4.73,
+    cost: 0.0134, // €13,400
+    priceEur: 13400,
+    powerDelta: 0,
+    batteryCapacityWh: 270,
     trl: 9.0,
-    riskPenaltyPercent: 0,
-    description: 'Flight-proven smallsat battery module supporting continuous night-side telemetry.',
+    description:
+      'Dragonfly Aerospace (South Africa) — 270 Wh/unit (up to 297 Wh, ~57–62 Wh/kg). Fits microsatellites (~50 kg class). Stackable with + / -.',
   },
   {
-    id: 'bat_sbs_1800wh',
-    name: 'High-Density Space Battery (1,800 Wh)',
+    id: 'bat_endurosat_eps_iv',
+    name: 'B3. EnduroSat EPS IV battery pack',
+    maker: 'EnduroSat, Bulgaria',
+    fits: 'mini to medium',
     category: 'power',
     subCategory: 'batteries',
-    mass: 18,
-    cost: 35,
-    powerDelta: -10,
-    batteryCapacityWh: 1800,
+    mass: 19.5, // First unit includes power distribution
+    extraUnitMass: 13.0, // +13 kg per extra pack
+    cost: 0.07, // €70,000 first unit
+    extraUnitCost: 0.03, // ~€30,000 each extra pack
+    priceEur: 70000,
+    extraUnitPriceEur: 30000,
+    powerDelta: 0,
+    batteryCapacityWh: 1100,
     hasRedundancy: true,
     trl: 9.0,
-    riskPenaltyPercent: 0,
-    description: 'Dual-bus Li-ion battery assembly built for 72-minute GEO equinox eclipses.',
+    description:
+      'EnduroSat (Bulgaria) — 1,100 Wh/unit (~85 Wh/kg). 1st unit: 19.5 kg & €70,000 (includes power distribution); extra packs: +13 kg & ~€30,000 each.',
   },
   {
-    id: 'bat_deep_4500wh',
-    name: 'Deep-Space Redundant Energy Bank (4,500 Wh)',
+    id: 'bat_saft_ves180',
+    name: 'B4. Saft VES180 cell',
+    maker: 'Saft, France',
+    fits: 'medium to large, GEO and L2 (used on Alphabus)',
     category: 'power',
     subCategory: 'batteries',
-    mass: 42,
-    cost: 75,
-    powerDelta: -18,
-    batteryCapacityWh: 4500,
+    mass: 1.11,
+    cost: 0.005, // €5,000 per cell
+    priceEur: 5000,
+    powerDelta: 0,
+    batteryCapacityWh: 180,
     hasRedundancy: true,
-    trl: 8.5,
-    riskPenaltyPercent: 0,
-    description: 'Triple-redundant cell bank with active cell balancing for high-power payloads.',
+    trl: 9.5,
+    description:
+      'Saft (France) — ~180 Wh/cell (≥175 Wh/kg). Built for medium-to-large GEO & L2 spacecraft (Alphabus flight heritage). Stackable with + / -.',
   },
 
   // =========================================================================
-  // HP-01: POWER — 1.2 SOLAR PANELS (4 CARDS)
+  // HP-01: POWER — 1.2 SOLAR PANELS (P2–P5)
   // =========================================================================
   {
-    id: 'pwr_cubesat_120w',
-    name: '6U Deployable Solar Array (120W Peak)',
+    id: 'pwr_dhv_dsa_6u_2d_l',
+    name: 'P2. DHV DSA-6U-2D-L, pair',
+    fits: 'CubeSats 6U to 12U',
     category: 'power',
     subCategory: 'solar_panels',
-    mass: 4,
-    cost: 12,
-    powerDelta: 120,
-    degradationRate: 0.035,
+    mass: 1.6, // 2 x 0.82 kg
+    cost: 0.0155, // ~€15,500
+    priceEur: 15500,
+    powerDelta: 109, // 2 wings x 54.7 W
+    degradationRate: 0.03,
     trl: 9.0,
-    riskPenaltyPercent: 10,
-    riskNote: 'Tight power margin; high-draw payloads must operate in short duty cycles.',
-    description: 'Compact CubeSat triple-junction GaAs wings (TBIRD/ASTERIA class).',
+    description:
+      'Deployable Solar Array sized for 6U–12U CubeSats with double deployable wings (two panels fold out, ~109 W BOL).',
   },
   {
-    id: 'pwr_standard_600w',
-    name: 'Dual-Wing GaAs Solar Array (650W)',
+    id: 'pwr_dhv_bmsa_355w',
+    name: 'P3. DHV BMSA-355W',
+    fits: 'micro and mini',
     category: 'power',
     subCategory: 'solar_panels',
-    mass: 38,
-    cost: 40,
-    powerDelta: 650,
+    mass: 7.0,
+    cost: 0.0506, // ~€50,600
+    priceEur: 50600,
+    powerDelta: 355,
     degradationRate: 0.025,
     trl: 9.0,
-    riskPenaltyPercent: 0,
-    description: 'CoRoT-class articulated solar wings with single-axis solar alpha drive.',
+    description:
+      'Body-Mounted Solar Array fixed directly onto the satellite sides—no deployment mechanisms required (355 W BOL, micro & mini class).',
   },
   {
-    id: 'pwr_deep_space_1200w',
-    name: 'High-Efficiency Triple-Junction Array (1,250W)',
+    id: 'pwr_redwire_rosa',
+    name: 'P4. Redwire ROSA',
+    fits: 'mini to large',
     category: 'power',
     subCategory: 'solar_panels',
-    mass: 85,
-    cost: 95,
-    powerDelta: 1250,
+    mass: 10.0,
+    cost: 0.15665, // ~€142,400 to €170,900
+    priceEur: 156650,
+    powerDelta: 1100, // ~1,000 to 1,200 W (100–120 W/kg)
     degradationRate: 0.02,
-    trl: 8.5,
-    riskPenaltyPercent: 0,
-    description: 'Kepler-class rigid composite panels rated for deep-space & L2 solar flux.',
+    trl: 9.0,
+    description:
+      'Roll-Out Solar Array: flexible photovoltaic blanket that unrolls on composite booms without motors (~1,100 W BOL, mini to large).',
   },
   {
-    id: 'pwr_l2_sunshield_2200w',
-    name: 'Ultra-Flex 2.2 kW Array + Sunshield Skirt',
+    id: 'pwr_dhv_dsa_1268w',
+    name: 'P5. DHV DSA-1268W',
+    fits: 'medium and large',
     category: 'power',
     subCategory: 'solar_panels',
-    mass: 155,
-    cost: 165,
-    powerDelta: 2200,
-    degradationRate: 0.018,
-    trl: 8.5,
-    riskPenaltyPercent: 0,
-    description: 'Gaia/EDRS-class high-output solar array with integrated deployment skirt.',
+    mass: 27.6,
+    cost: 0.1806, // ~€180,600
+    priceEur: 180600,
+    powerDelta: 1268,
+    degradationRate: 0.02,
+    trl: 9.0,
+    description:
+      'Deployable Solar Array with quintuple wing architecture—five rigid panels fold out for 1,268 W BOL (medium and large satellites).',
   },
 
   // =========================================================================
@@ -720,7 +741,7 @@ export const INSTRUMENTS: Instrument[] = [
     name: 'Compact CMOS camera, 6 cm',
     path: 'star_obs',
     type: '6.07 cm Lens + Piezo CMOS',
-    referenceMission: 'ASTERIA', // Internal reference (hidden from player)
+    referenceMission: 'ASTERIA',
     mass: 6,
     cost: 15,
     power: 18,
@@ -741,7 +762,7 @@ export const INSTRUMENTS: Instrument[] = [
     name: 'Wide-field nano-telescope, 3 cm',
     path: 'star_obs',
     type: '3 cm Wide-FOV Photometer (24°)',
-    referenceMission: 'BRITE', // Internal reference (hidden from player)
+    referenceMission: 'BRITE',
     mass: 7,
     cost: 18,
     power: 15,
@@ -762,7 +783,7 @@ export const INSTRUMENTS: Instrument[] = [
     name: 'Small CCD telescope, 27 cm',
     path: 'star_obs',
     type: '27 cm Off-Axis Telescope + 4 CCDs (16.8 MP)',
-    referenceMission: 'CoRoT', // Internal reference (hidden from player)
+    referenceMission: 'CoRoT',
     mass: 300,
     cost: 120,
     power: 150,
@@ -782,7 +803,7 @@ export const INSTRUMENTS: Instrument[] = [
     name: 'Wide-field photometer, 95 cm',
     path: 'star_obs',
     type: '0.95 m Schmidt Telescope + 42 CCDs (95 MP)',
-    referenceMission: 'Kepler', // Internal reference (hidden from player)
+    referenceMission: 'Kepler',
     mass: 478,
     cost: 260,
     power: 280,
@@ -803,7 +824,7 @@ export const INSTRUMENTS: Instrument[] = [
     name: 'Dual-telescope survey instrument',
     path: 'star_obs',
     type: 'Dual 1.45×0.5 m Mirrors + 106 CCDs (938 MP)',
-    referenceMission: 'Gaia', // Internal reference (hidden from player)
+    referenceMission: 'Gaia',
     mass: 710,
     cost: 420,
     power: 627,
@@ -827,7 +848,7 @@ export const INSTRUMENTS: Instrument[] = [
     name: 'Compact X-band radio',
     path: 'telecom',
     type: '50 Mbps X-Band RF Payload',
-    referenceMission: 'OPS-SAT EWC27', // Internal reference (hidden from player)
+    referenceMission: 'OPS-SAT EWC27',
     mass: 1,
     cost: 8,
     power: 10,
@@ -846,7 +867,7 @@ export const INSTRUMENTS: Instrument[] = [
     name: 'CubeSat laser terminal',
     path: 'telecom',
     type: 'Direct-to-Earth Optical Laser + 2 TB Buffer',
-    referenceMission: 'TBIRD', // Internal reference (hidden from player)
+    referenceMission: 'TBIRD',
     mass: 3,
     cost: 22,
     power: 100,
@@ -865,7 +886,7 @@ export const INSTRUMENTS: Instrument[] = [
     name: 'Laser relay terminal pair',
     path: 'telecom',
     type: '10.8 cm Dual Laser Relay (1.2 Gbps)',
-    referenceMission: 'LCRD', // Internal reference (hidden from player)
+    referenceMission: 'LCRD',
     mass: 65,
     cost: 90,
     power: 130,
@@ -886,7 +907,7 @@ export const INSTRUMENTS: Instrument[] = [
     name: 'GEO laser relay terminal',
     path: 'telecom',
     type: '13.5 cm LEO-to-GEO Laser Relay (1.8 Gbps)',
-    referenceMission: 'Tesat LCT (EDRS)', // Internal reference (hidden from player)
+    referenceMission: 'Tesat LCT (EDRS)',
     mass: 53,
     cost: 155,
     power: 160,
@@ -906,7 +927,7 @@ export const INSTRUMENTS: Instrument[] = [
     name: 'Mobile service payload (L-band)',
     path: 'telecom',
     type: '11 m Reflector + 8 DSPs (200+ Spot Beams)',
-    referenceMission: 'Alphasat', // Internal reference (hidden from player)
+    referenceMission: 'Alphasat',
     mass: 1850,
     cost: 340,
     power: 1600,
@@ -925,8 +946,7 @@ export const INSTRUMENTS: Instrument[] = [
 ];
 
 // =========================================================================
-// LAUNCH VEHICLES & CONFIGURATIONS (FROM LAUNCHER DATA EXCEL)
-// Columns used: 400km LEO (28.5°, 51.6°, Polar 90°, SSO 98°), 35,786km GSO, L2 (C3 = 0)
+// LAUNCH VEHICLES & CONFIGURATIONS
 // =========================================================================
 export const LAUNCH_VEHICLES: LaunchVehicle[] = [
   {
@@ -1126,6 +1146,79 @@ export const LAUNCH_VEHICLES: LaunchVehicle[] = [
   },
 ];
 
+// =========================================================================
+// HELPER: COMPUTE TOTALS FOR SELECTED BUS ITEMS (SUPPORTS STACKED BATTERIES)
+// =========================================================================
+export function calculateBusSelectionTotals(selectedBusIds: string[]) {
+  const counts = new Map<string, number>();
+  selectedBusIds.forEach((id) => {
+    counts.set(id, (counts.get(id) ?? 0) + 1);
+  });
+
+  let mass = 0;
+  let cost = 0;
+  let bolPower = 0;
+  let powerDraw = 0;
+  let totalBatteryWh = 0;
+  let bonusDeltaV = 0;
+  let dataDownlink = 0;
+  let contactMultiplier = 1;
+  let degradationRate = 0.025;
+  const trlValues: number[] = [];
+
+  counts.forEach((qty, id) => {
+    const comp = BUS_COMPONENTS.find((c) => c.id === id);
+    if (!comp || qty <= 0) return;
+
+    const unitMass = comp.mass + (qty - 1) * (comp.extraUnitMass ?? comp.mass);
+    const unitCost = comp.cost + (qty - 1) * (comp.extraUnitCost ?? comp.cost);
+
+    mass += unitMass;
+    cost += unitCost;
+
+    if (comp.batteryCapacityWh) {
+      totalBatteryWh += comp.batteryCapacityWh * qty;
+    }
+    if (comp.deltaVAdded) {
+      bonusDeltaV += comp.deltaVAdded * qty;
+    }
+    if (comp.powerDelta > 0) {
+      bolPower += comp.powerDelta * qty;
+      if (typeof comp.degradationRate === 'number') {
+        degradationRate = comp.degradationRate;
+      }
+    } else if (comp.rfTransmitWatts) {
+      powerDraw += comp.rfTransmitWatts * 5 * qty;
+    } else {
+      powerDraw += Math.abs(comp.powerDelta) * qty;
+    }
+
+    if (comp.dataDownlink) {
+      dataDownlink += comp.dataDownlink * qty;
+    }
+    if (comp.contactMultiplier) {
+      contactMultiplier = Math.max(contactMultiplier, comp.contactMultiplier);
+    }
+
+    for (let i = 0; i < qty; i++) {
+      trlValues.push(comp.trl ?? 8.5);
+    }
+  });
+
+  return {
+    mass: Math.round(mass * 100) / 100,
+    cost: Math.round(cost * 100000) / 100000,
+    bolPower,
+    powerDraw,
+    totalBatteryWh,
+    bonusDeltaV,
+    dataDownlink,
+    contactMultiplier,
+    degradationRate,
+    trlValues,
+  };
+}
+
 export function getActiveLVConfig(lv: LaunchVehicle | null): LaunchVehicleConfiguration | null {
   if (!lv || !lv.configurations?.length) return null;
   return (
@@ -1169,7 +1262,6 @@ export function getLauncherMaxPayload(
     return cfg.capacities.l2;
   }
 
-  // 400 km LEO — match selected inclination degree
   const deg = orbit?.selectedInclination?.deg ?? orbit?.inclinationDeg ?? 51.6;
   if (Math.abs(deg - 28.5) < 0.5) return cfg.capacities.leo28_5;
   if (Math.abs(deg - 51.6) < 0.5) return cfg.capacities.leo51_6;
